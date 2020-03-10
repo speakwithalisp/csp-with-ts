@@ -1,5 +1,6 @@
-import { IChanValue, Instruction, IStream, InstrTypes } from './channels';
-const MAX_QUEUE_SIZE = 1024;
+import { IChanValue } from './channels';
+import { Instruction } from './instructions';
+import { IStream, InstrTypes, MAX_QUEUE_SIZE } from './constants';
 function acopy<T extends IStream>(
     src: Array<IChanValue<T> | undefined> | Array<Instruction<T, InstrTypes> | undefined>,
     srcStart: number,
@@ -12,7 +13,7 @@ function acopy<T extends IStream>(
     }
 }
 
-export class RingBuffer<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> implements Iterable<Q> {
+export class RingBuffer<T extends IStream, S extends IStream = T, Q extends IChanValue<T> | Instruction<T, InstrTypes, S> = IChanValue<T>> implements Iterable<Q> {
     head: number;
     tail: number;
     length: number;
@@ -119,12 +120,12 @@ export class RingBuffer<T extends IStream, Q extends IChanValue<T> | Instruction
     }
 }
 
-export function ring<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>>(n: number): RingBuffer<T, Q> {
+export function ring<T extends IStream, S extends IStream = T, Q extends IChanValue<T> | Instruction<T, InstrTypes, S> = IChanValue<T>>(n: number): RingBuffer<T, S, Q> {
     if (n <= 0) {
         throw new Error("Can't create a ring buffer of size 0");
     }
 
-    return new RingBuffer<T, Q>(0, 0, 0, new Array(n));
+    return new RingBuffer<T, S, Q>(0, 0, 0, new Array(n));
 }
 
 /**
@@ -135,15 +136,13 @@ export function ring<T extends IStream, Q extends IChanValue<T> | Instruction<T,
  * running the transduced step function, while still allowing a
  * transduced step to expand into multiple "essence" steps.
  */
-export class FixedBuffer<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> implements Iterable<Q> {
-    type: string;
-    buffer: RingBuffer<T, Q>;
+export class FixedBuffer<T extends IStream> implements Iterable<IChanValue<T>> {
+    buffer: RingBuffer<T>;
     n: number;
 
-    constructor(buffer: RingBuffer<T, Q>, n: number, type: string) {
+    constructor(buffer: RingBuffer<T>, n: number) {
         this.buffer = buffer;
         this.n = n;
-        this.type = type;
     }
 
     *[Symbol.iterator]() { yield* this.buffer; }
@@ -152,15 +151,15 @@ export class FixedBuffer<T extends IStream, Q extends IChanValue<T> | Instructio
         return this.buffer.length === this.n;
     }
 
-    remove(): Q | undefined {
+    remove(): IChanValue<T> | undefined {
         return this.buffer.pop();
     }
 
-    last(): Q | undefined {
+    last(): IChanValue<T> | undefined {
         return this.buffer.last();
     }
 
-    add(item: Q | undefined): void {
+    add(item: IChanValue<T> | undefined): void {
         this.buffer.unboundedUnshift(item);
     }
 
@@ -171,28 +170,33 @@ export class FixedBuffer<T extends IStream, Q extends IChanValue<T> | Instructio
     }
 }
 
-export function fixed<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>>(n: number, type?: string): FixedBuffer<T, Q> {
-    return new FixedBuffer<T, Q>(ring(n), n, type || 'primitive');
+export function fixed<T extends IStream>(n: number): FixedBuffer<T> {
+    return new FixedBuffer<T>(ring<T>(n), n);
 }
 
-export class DroppingBuffer<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> {
-    buffer: RingBuffer<T, Q>;
+export class DroppingBuffer<T extends IStream> implements Iterable<IChanValue<T>> {
+    buffer: RingBuffer<T>;
     n: number;
 
-    constructor(buffer: RingBuffer<T, Q>, n: number) {
+    constructor(buffer: RingBuffer<T>, n: number) {
         this.buffer = buffer;
         this.n = n;
     }
+
+    *[Symbol.iterator]() { yield* this.buffer; }
 
     isFull(): boolean {
         return false;
     }
 
-    remove(): IChanValue<T> | Instruction<T, InstrTypes> | undefined {
+    remove(): IChanValue<T> | undefined {
         return this.buffer.pop();
     }
 
-    add(item: Q | undefined): void {
+    last(): IChanValue<T> | undefined {
+        return this.buffer.last();
+    }
+    add(item: IChanValue<T> | undefined): void {
         if (this.buffer.length !== this.n) {
             this.buffer.unshift(item);
         }
@@ -205,34 +209,39 @@ export class DroppingBuffer<T extends IStream, Q extends IChanValue<T> | Instruc
     }
 }
 
-export function dropping<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>>(n: number): DroppingBuffer<T, Q> {
-    return new DroppingBuffer<T, Q>(ring<T, Q>(n), n);
+export function dropping<T extends IStream>(n: number): DroppingBuffer<T> {
+    return new DroppingBuffer<T>(ring<T>(n), n);
 }
 
-export class SlidingBuffer<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> {
-    buffer: RingBuffer<T, Q>;
+export class SlidingBuffer<T extends IStream> implements Iterable<IChanValue<T>> {
+    buffer: RingBuffer<T>;
     n: number;
 
-    constructor(buffer: RingBuffer<T, Q>, n: number) {
+    constructor(buffer: RingBuffer<T>, n: number) {
         this.buffer = buffer;
         this.n = n;
     }
+
+    *[Symbol.iterator]() { yield* this.buffer; }
 
     isFull(): boolean {
         return false;
     }
 
-    remove(): Q | undefined {
+    remove(): IChanValue<T> | undefined {
         return this.buffer.pop();
     }
 
-    add(item: Q): void {
+    add(item: IChanValue<T>): void {
         if (this.buffer.length === this.n) {
             this.remove();
         }
         this.buffer.unshift(item);
     }
 
+    last(): IChanValue<T> | undefined {
+        return this.buffer.last();
+    }
     closeBuffer(): void { }
 
     count(): number {
@@ -240,51 +249,55 @@ export class SlidingBuffer<T extends IStream, Q extends IChanValue<T> | Instruct
     }
 }
 
-export function sliding<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>>(n: number): SlidingBuffer<T, Q> {
-    return new SlidingBuffer<T, Q>(ring<T, Q>(n), n);
+export function sliding<T extends IStream>(n: number): SlidingBuffer<T> {
+    return new SlidingBuffer<T>(ring<T>(n), n);
 }
 
-export class PromiseBuffer<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> {
-    value: Promise<Q> | undefined | null;
+// class PromiseBuffer<T extends IStream>  {
+//     value: Promise<IChanValue<T>> | undefined | null;
 
-    static NO_VALUE = undefined;
-    static isUndelivered = (value: any): boolean => PromiseBuffer.NO_VALUE === value;
+//     static NO_VALUE = undefined;
+//     static isUndelivered = (value: any): boolean => PromiseBuffer.NO_VALUE === value;
 
-    constructor(value?: Promise<Q>) {
-        this.value = value;
-    }
+//     constructor(value?: Promise<IChanValue<T>>) {
+//         this.value = value;
+//     }
 
-    isFull(): boolean {
-        return false;
-    }
+//     isFull(): boolean {
+//         return false;
+//     }
 
-    remove(): Promise<Q> | undefined | null {
-        return this.value;
-    }
+//     remove(): Promise<IChanValue<T>> | undefined | null {
+//         return this.value;
+//     }
 
-    add(item: Promise<Q>): void {
-        if (PromiseBuffer.isUndelivered(this.value)) {
-            this.value = item;
-        }
-    }
+//     add(item: Promise<IChanValue<T>>): void {
+//         if (PromiseBuffer.isUndelivered(this.value)) {
+//             this.value = item;
+//         }
+//     }
 
-    closeBuffer(): void {
-        if (PromiseBuffer.isUndelivered(this.value)) {
-            this.value = null;
-        }
-    }
+//     last(): Promise<IChanValue<T>> | null {
+//         if (PromiseBuffer.isUndelivered(this.value)) { return CLOSED; }
+//         return this.value === undefined ? CLOSED : this.value;
+//     }
+//     closeBuffer(): void {
+//         if (PromiseBuffer.isUndelivered(this.value)) {
+//             this.value = null;
+//         }
+//     }
 
-    count(): number {
-        return PromiseBuffer.isUndelivered(this.value) ? 0 : 1;
-    }
-}
+//     count(): number {
+//         return PromiseBuffer.isUndelivered(this.value) ? 0 : 1;
+//     }
+// }
 
-export function promise<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>>(): PromiseBuffer<T, Q> {
-    return new PromiseBuffer<T, Q>();
-}
+// function promise<T extends IStream>(): PromiseBuffer<T> {
+//     return new PromiseBuffer<T>();
+// }
 
-export type BufferType<T extends IStream, Q extends IChanValue<T> | Instruction<T, InstrTypes> = IChanValue<T>> =
-    FixedBuffer<T, Q>
-    | DroppingBuffer<T, Q>
-    | SlidingBuffer<T, Q>
-    | PromiseBuffer<T, Q>;
+export type BufferType<T extends IStream> =
+    FixedBuffer<T>
+    | DroppingBuffer<T>
+    | SlidingBuffer<T>;
+// | PromiseBuffer<T, Q>;
