@@ -1,31 +1,6 @@
 import React, { useState, useCallback, useEffect, memo, MouseEvent, Props, Dispatch, SetStateAction, MemoExoticComponent, FunctionComponent } from 'react';
 import './App.css';
-import { chan, IChan, IChanValue } from './csp/impl/channels';
-import { putAsync } from './csp/impl/processEvents';
-import { go, timeout, IAltsArgs } from './csp/impl/go';
-
-// const myChan = chan<string | boolean>();
-// function fakeQuery(ch: IChan<string>, query: string) {
-//   const randInt: number = 400 + Math.random() * 2000;
-//   go`<!${timeout(randInt)}; >! ${ch} ${function* () { yield query; ch.close(); }}`;
-// }
-// 
-// function createQueries(...queries: string[]): IChan<string> {
-//   const ch = chan<string>();
-//   queries.forEach((query: string) => { fakeQuery(ch, query); });
-//   return ch;
-// }
-// 
-// export default function App() {
-//   const [winner, setWinner] = useState<string>("");
-//   useEffect(() => go`<! ${myChan} ${function* () { while (true) { setWinner(yield); } }}`, []);
-//   const raceQueries = useCallback(() => {
-//     go`?: ${[timeout(1000), createQueries("booby", "shooby"), createQueries("n00by", "l00by")]} ${function (val) { if (typeof val === 'boolean') { putAsync(myChan, "too bad, so saaad!"); } else { putAsync(myChan, val); } }}`;
-//   }, []);
-//   return (<div><p>Winner says: {winner}</p><button onClick={raceQueries}>Click it aaho</button></div>);
-// };
-// 
-
+import { go, timeout, IAltsArgs, chan, IChan, IChanValue, putAsync } from './csp';
 
 interface Point { x: number; y: number; };
 const WIDTH: number = 80; const HEIGHT: number = 35; const SCALE = 50; const DELTA = 0.01;
@@ -40,7 +15,7 @@ function listenForDrag(ch: IChan<Point>) {
 }
 
 function emitClickDrag() {
-  const ch = chan<Point>(2);
+  const ch = chan<Point>(1);
   const goBlock = listenForDrag(ch);
   return { channel: ch, process: goBlock };
 }

@@ -18,6 +18,7 @@ interface IAltsArgsPut<T extends IStream = IStream, S extends IStream = T> exten
     [1]: IChanValue<T>;
 };
 
+//
 export type IAltsArgs<T extends IStream = IStream, S extends IStream = T> = (IAltsArgsPut | IChan<T, S>);
 
 type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
