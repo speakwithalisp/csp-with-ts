@@ -2,16 +2,14 @@
     "name": "csp-with-ts",
     "version": "0.5.2",
     "scripts": {
-        "build": "tscc"
+        "clean": "rm -rf lib",
+        "build": "npm run clean && tscc && cp ./src/index.d.ts ./lib"
     },
     "eslintConfig": {
         "extends": "react-app"
     },
-    "main": "./lib/bundle.js",
-    "types": "./src/index.d.ts",
-    "typescript": {
-        "main": "./src/index.ts"
-    },
+    "main": "index.js",
+    "types": "lib",
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
     "dependencies": {

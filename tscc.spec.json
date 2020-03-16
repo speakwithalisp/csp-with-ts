@@ -2,8 +2,5 @@
     "prefix": "lib/",
     "modules": {
         "index":   "src/index.ts"
-    },
-    "compilerFlags": {
-        "compilation_level": "ADVANCED"
     }
 }

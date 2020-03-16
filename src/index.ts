@@ -6,5 +6,6 @@ export { chan } from './impl/channels';
 export { putAsync, takeAsync } from './impl/processEvents';
 export { go, timeout } from './impl/go';
 export * from './impl/utils';
+export * from './index';
 
 export function CSP(): IGoordinator { return csp(register); }
