@@ -8,6 +8,7 @@
     "eslintConfig": {
         "extends": "react-app"
     },
+    "main": "lib/index.js",
     "types": "lib",
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
