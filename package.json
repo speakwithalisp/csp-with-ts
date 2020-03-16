@@ -1,7 +1,6 @@
 {
-    "name": "csp",
-    "version": "0.1.0",
-    "private": true,
+    "name": "csp-with-ts",
+    "version": "0.5.0",
     "scripts": {
         "build": "tscc"
     },
