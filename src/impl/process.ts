@@ -1,5 +1,5 @@
 import { IStream, ProcessEvents } from './constants';
-import { IChan, IChanValue, IProc, IProcE, ProcessEventQ, IGoordinator } from './interfaces';
+import { IChan, IChanValue, IProc, IProcE, ProcessEventQ, IGoordinator, Thread } from './interfaces';
 import { instruction, instructionCallback } from './instructions';
 import { createQ } from './processQueue';
 import { queueImmediately } from './scheduler';
@@ -32,7 +32,7 @@ export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, 
         if (!procEvents.length || procEvents.every(proc => proc.isDone)) { // coordinator.push(KILL.bind(procInstance));
             KILL.call(procInstance);
         }
-        const thread: undefined | Generator<undefined, void, undefined> = yield;
+        const thread: undefined | Thread<undefined, void, undefined> = yield;
         if (!thread) { throw new Error("coroutine thread instance not provided"); }
         try {
             while (procEvents.length) {
@@ -81,7 +81,7 @@ export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, 
 export function createAlts(returnChan: IChan<IStream>, winVal: { readonly val: IChanValue<IStream> | undefined; done?: boolean; setVal(val: IChanValue<IStream>): void }, altFlag: boolean, ...processEvents: IProcE<ProcessEvents, IStream, IStream>[]): IProc {
     function* makeThread(procInst: IProc): Generator<undefined, void, undefined | Generator<undefined, void, undefined>> {
         let proc: IProcE<ProcessEvents, IStream>;
-        const thread: undefined | Generator<undefined, void, undefined> = yield;
+        const thread: undefined | Thread<undefined, void, undefined> = yield;
         if (!thread) { throw new Error("coroutine thread instance not provided"); }
         try {
             for (proc of procInst.events) {

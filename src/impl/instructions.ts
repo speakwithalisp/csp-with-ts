@@ -1,11 +1,11 @@
 import { IStream, InstrTypes, ProcessEvents, CLOSED } from './constants';
-import { IChan, IChanValue, InstructionGeneral, InstructionCallback, IProcE, IProcSleepE } from './interfaces';
+import { Thread, IChan, IChanValue, InstructionGeneral, InstructionCallback, IProcE, IProcSleepE } from './interfaces';
 import { queueNextOnThread } from './scheduler';
 import { CSP } from './service';
 
 // Instruction
 
-export function instruction<T extends IStream, S extends IStream>(event: IProcE<ProcessEvents.PUT | ProcessEvents.TAKE, T, S>, ch: IChan<T, S>, thread: Generator<undefined, void, undefined>): (() => InstructionGeneral<T, S>) & {
+export function instruction<T extends IStream, S extends IStream>(event: IProcE<ProcessEvents.PUT | ProcessEvents.TAKE, T, S>, ch: IChan<T, S>, thread: Thread<undefined, void, undefined>): (() => InstructionGeneral<T, S>) & {
     readonly INSTRUCTION: InstrTypes.GENERAL;
     readonly event: ProcessEvents;
     readonly channel: IChan<T, S>;
@@ -58,7 +58,7 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
     };
 }
 
-export function instructionCallback<T extends IStream, S extends IStream = T>(event: ProcessEvents, ch: IChan<T, S>, cb: IProcSleepE | (((val?: IChanValue<S>) => IChanValue<T> | void) & { close?: boolean; }), thread: Generator<undefined, void, undefined>, altFlag?: boolean): InstructionCallback<T, S> {
+export function instructionCallback<T extends IStream, S extends IStream = T>(event: ProcessEvents, ch: IChan<T, S>, cb: IProcSleepE | (((val?: IChanValue<S>) => IChanValue<T> | void) & { close?: boolean; }), thread: Thread<undefined, void, undefined>, altFlag?: boolean): InstructionCallback<T, S> {
     let ret: IProcSleepE | (((val?: IChanValue<S>) => IChanValue<T> | void) & { close?: boolean; });
     ch.altFlag = !!altFlag;
     switch (event) {
