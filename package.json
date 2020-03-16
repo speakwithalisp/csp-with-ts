@@ -3,19 +3,26 @@
     "version": "0.5.8",
     "scripts": {
         "clean": "rm -rf lib",
-        "build": "npm run clean && tsc -p ."
+        "build": "npm run clean && rollup -c && tscc"
     },
     "eslintConfig": {
         "extends": "react-app"
     },
-    "main": "lib/index.js",
+    "main": "index.js",
     "types": "lib",
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
     "dependencies": {
         "@types/node": "^12.0.0"
     },
+    "homepage": "https://github.com/owner/project#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/speakwithalisp/csp-with-ts.git"
+    },
     "devDependencies": {
+        "@rollup/plugin-node-resolve": "^7.1.1",
+        "@tscc/rollup-plugin-tscc": "^0.4.7",
         "@tscc/tscc": "^0.4.8",
         "@types/ramda": "^0.26.43",
         "@types/react": "^16.9.0",
@@ -35,6 +42,8 @@
         "react": "^16.12.0",
         "react-dev-utils": "^10.1.0",
         "react-dom": "^16.12.0",
+        "rollup": "^2.0.6",
+        "rollup-plugin-typescript2": "^0.26.0",
         "semver": "6.3.0",
         "tslib": "^1.11.1",
         "typescript": "^3.8.3"

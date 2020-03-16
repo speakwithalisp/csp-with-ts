@@ -1,15 +1,10 @@
 {
-    "prefix": "lib/",
+    "prefix": { "rollup": "lib/", "cc": "lib/min." },
     "modules": {
         "index":   "src/index.ts"
     },
     "compilerFlags": {
         "compilation_level": "ADVANCED",
-        "language_in": "ES6_STRICT",
-        "language_out": "ES5_STRICT",
-        "warning_level": "VERBOSE",
-        "isolation_mode": "IIFE",
-        "assume_function_wrapper": true,
-        "rewrite_polyfills": false
+        "module_resolution": "NODE"
     }
 }

@@ -1,5 +1,6 @@
 {
     "include": ["src"],
+    "exclude": ["node_modules"],
     "files": ["src/index.ts",
               "src/impl/interfaces.ts",
               "src/impl/buffers.ts",
@@ -17,23 +18,22 @@
              ],
     "compilerOptions": {
         "strict": true,
-        "outDir": "lib",
         "strictNullChecks": true,
         "noImplicitThis": true,
         "downlevelIteration": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
+        "importHelpers": true,
         "moduleResolution": "node",
         "module": "commonjs",
         "sourceMap": true,
         "forceConsistentCasingInFileNames": true,
         "allowSyntheticDefaultImports": true,
-        "isolatedModules": true,
         "lib": [
             "dom",
             "dom.iterable",
             "esnext"
         ],
-        "target": "es5"
+        "target": "es6"
     }
 }
