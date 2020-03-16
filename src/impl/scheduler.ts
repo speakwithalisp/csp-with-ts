@@ -1,11 +1,11 @@
 import { ProcessEvents, InstrTypes, IStream } from './constants';
-import { IChan, IProcE, IProcPutE, IProcTakeE, Instruction, InstructionGeneral, Thread, InstructionCallback, ProcessEventQ } from './interfaces'
+import { IChan, IProcE, IProcPutE, IProcTakeE, Instruction, InstructionGeneral, InstructionCallback, ProcessEventQ } from './interfaces'
 import { CSP } from './service';
 
 // scheduling functions
 export function queueImmediately<T extends IStream, S extends IStream = T>(proc: IProcE<ProcessEvents, T, S>) { (proc as IProcPutE<T, S> | IProcTakeE<T, S>).return(); }
 
-export function queueNextOnThread(thread: Thread<undefined, void, undefined>) {
+export function queueNextOnThread(thread: Generator<undefined, void, undefined>) {
     thread.next();
 }
 export function queueRecursiveAdd<T extends IStream>(toPQ: ProcessEventQ<T | T & IStream>, fromPQ: ProcessEventQ<T>, instr: Instruction<T, InstrTypes, any>): void {

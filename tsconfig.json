@@ -18,6 +18,9 @@
              ],
     "compilerOptions": {
         "strict": true,
+        "baseUrl": "types",
+        "typeRoots": ["types"],
+        "types": ["node"],
         "strictNullChecks": true,
         "noImplicitThis": true,
         "downlevelIteration": true,

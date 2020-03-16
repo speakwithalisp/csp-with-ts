@@ -45,7 +45,7 @@ export declare interface Instruction<T extends IStream, K extends InstrTypes, S 
     readonly INSTRUCTION: K;
     readonly event: ProcessEvents;
     readonly channel: IChan<T, S>;
-    readonly thread: Thread<undefined, void, undefined>;
+    readonly thread: Generator<undefined, void, undefined>;
 };
 export declare interface InstructionCallback<T extends IStream, S extends IStream = T> extends Instruction<T, InstrTypes.CALLBACK, S> {
     (val?: IChanValue<S>): IChanValue<T> | void;
@@ -101,6 +101,3 @@ export declare interface IGoordinator extends WeakMap<IChan<IStream>, ProcessEve
     get<T extends IStream, S extends IStream = T>(chan: IChan<T, S>): ProcessEventQ<T, S>;
     register(this: IGoordinator, process: IProc): void;
 };
-
-// thread
-export declare interface Thread<T = any, TNext = any, TReturn = any> extends Generator<T, TNext, TReturn> { };
