@@ -17,13 +17,13 @@
              ],
     "compilerOptions": {
         "strict": true,
+        "outDir": "lib",
         "strictNullChecks": true,
         "noImplicitThis": true,
         "downlevelIteration": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "moduleResolution": "node",
-        "importHelpers": true,
         "module": "commonjs",
         "sourceMap": true,
         "forceConsistentCasingInFileNames": true,
@@ -34,6 +34,6 @@
             "dom.iterable",
             "esnext"
         ],
-        "target": "es6"
+        "target": "es5"
     }
 }

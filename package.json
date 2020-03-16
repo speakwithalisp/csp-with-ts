@@ -3,12 +3,11 @@
     "version": "0.5.6",
     "scripts": {
         "clean": "rm -rf lib",
-        "build": "npm run clean && tscc"
+        "build": "npm run clean && tsc -p ."
     },
     "eslintConfig": {
         "extends": "react-app"
     },
-    "main": "index.js",
     "types": "lib",
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
