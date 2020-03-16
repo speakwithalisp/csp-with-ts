@@ -1,43 +1,45 @@
 {
-  "name": "csp",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "@types/jest": "^24.0.0",
-    "@types/node": "^12.0.0",
-    "@types/react": "^16.9.0",
-    "@types/react-dom": "^16.9.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "react-scripts": "3.3.1",
-    "typescript": "~3.7.2"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@types/ramda": "^0.26.43",
-    "ramda": "^0.27.0"
-  }
+    "name": "csp",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "start": "node scripts/start.js",
+        "build": "node scripts/build.js",
+        "test": "node scripts/test.js"
+    },
+    "eslintConfig": {
+        "extends": "react-app"
+    },
+    "main": "./lib/bundle.js",
+    "types": "./src/index.d.ts",
+    "typescript": {
+        "main": "./src/index.ts"
+    },
+    "dependencies": {
+        "@types/node": "^12.0.0",
+        "tslib": "^1.11.1"
+    },
+    "devDependencies": {
+        "@tscc/tscc": "^0.4.8",
+        "@types/ramda": "^0.26.43",
+        "@types/react": "^16.9.0",
+        "@types/react-dom": "^16.9.0",
+        "@typescript-eslint/eslint-plugin": "^2.10.0",
+        "@typescript-eslint/parser": "^2.10.0",
+        "eslint": "^6.6.0",
+        "eslint-config-react-app": "^5.2.0",
+        "eslint-plugin-flowtype": "4.6.0",
+        "eslint-plugin-import": "2.20.0",
+        "eslint-plugin-jsx-a11y": "6.2.3",
+        "eslint-plugin-react": "7.18.0",
+        "eslint-plugin-react-hooks": "^1.6.1",
+        "fs-extra": "^8.1.0",
+        "identity-obj-proxy": "3.0.0",
+        "ramda": "^0.27.0",
+        "react": "^16.12.0",
+        "react-dev-utils": "^10.1.0",
+        "react-dom": "^16.12.0",
+        "semver": "6.3.0",
+        "typescript": "^3.8.3"
+    }
 }

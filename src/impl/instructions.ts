@@ -1,24 +1,9 @@
 import { IStream, InstrTypes, ProcessEvents, CLOSED } from './constants';
-import { IChan, IChanValue } from './channels';
-import { IProcE, IProcSleepE } from './processEvents';
+import { IChan, IChanValue, InstructionGeneral, InstructionCallback, IProcE, IProcSleepE } from './interfaces';
 import { queueNextOnThread } from './scheduler';
-import CSP from './service';
+import { CSP } from './service';
 
 // Instruction
-export interface Instruction<T extends IStream, K extends InstrTypes, S extends IStream = T> {
-    readonly INSTRUCTION: K;
-    readonly event: ProcessEvents;
-    readonly channel: IChan<T, S>;
-    readonly thread: Generator<undefined, void, undefined>;
-};
-export interface InstructionCallback<T extends IStream, S extends IStream = T> extends Instruction<T, InstrTypes.CALLBACK, S> {
-    (val?: IChanValue<S>): IChanValue<T> | void;
-    readonly INSTRUCTION: InstrTypes.CALLBACK;
-    readonly close?: boolean;
-};
-export interface InstructionGeneral<T extends IStream, S extends IStream = T> extends Instruction<T, InstrTypes.GENERAL, S>, Generator<IChanValue<T> | undefined, void, IChanValue<S> | undefined> {
-    readonly INSTRUCTION: InstrTypes.GENERAL;
-};
 
 export function instruction<T extends IStream, S extends IStream>(event: IProcE<ProcessEvents.PUT | ProcessEvents.TAKE, T, S>, ch: IChan<T, S>, thread: Generator<undefined, void, undefined>): (() => InstructionGeneral<T, S>) & {
     readonly INSTRUCTION: InstrTypes.GENERAL;

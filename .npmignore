@@ -1,0 +1,6 @@
+src/
+test/
+config/
+.tscc_temp/
+public/
+scripts/

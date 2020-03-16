@@ -1,6 +1,7 @@
 import { BufferType, fixed } from './buffers';
+import { IChan, IChanValue } from './interfaces';
 import { IStream, CLOSED } from './constants';
-import CSP from './service';
+import { CSP } from './service';
 import { IXForm, isReduced, ITransducer } from './utils';
 import { queueFlushChannel } from './scheduler';
 //
@@ -12,27 +13,6 @@ import { queueFlushChannel } from './scheduler';
 //     | checking
 //     `----
 
-
-
-
-// type IStreamProcess = IChanValue<IStreamValue> & { readonly event: ProcessEvents; readonly channel: IChan<IStreamValue>; };
-
-// Channel (working around circular type definitions as a Channel can accept
-// another Channel as a value)
-// type IChanPrimitive<T extends IStream, Q extends IStream = T> = instaceof Channel<T, Q>;
-export type IChanValue<T extends IStream> = T | IChan<T> | IChan<T, any> | Promise<T> | typeof CLOSED;
-export interface IChan<T extends IStream, Q extends IStream = T> {
-    buffer: BufferType<Q>;
-    readonly hasXForm: boolean;
-    add(val: IChanValue<T>): void;
-    remove(): IChanValue<Q>;
-    count(): number;
-    last(): IChanValue<Q>;
-    close(): void;
-    isFull(): boolean;
-    readonly closed: boolean;
-    altFlag: boolean;
-};
 
 class NoXChannel<T extends IStream> implements IChan<T> {
     buffer: BufferType<T>;

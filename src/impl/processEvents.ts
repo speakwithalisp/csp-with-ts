@@ -1,31 +1,9 @@
 import { IStream, ProcessEvents, CLOSED } from './constants';
-import { IChanValue, IChan, isChan } from './channels';
+import { isChan } from './channels';
 import { makeFakeThread } from './utils';
-import CSP from './service';
+import { IChanValue, IChan, IProcPutE, IProcTakeE, IProcSleepE } from './interfaces';
+import { CSP } from './service';
 import { instructionCallback } from './instructions';
-
-
-// ProcessEvents type definition. Each ProcessEvent has one and only one channel
-// associalted with it
-export interface IProcPutE<T extends IStream, S extends IStream = T> extends Generator<IChanValue<T> | undefined, void, undefined> {
-    readonly event: ProcessEvents.PUT;
-    readonly channel: IChan<T, S>;
-    readonly isDone: boolean;
-    readonly altFlag: boolean;
-};
-export interface IProcTakeE<T extends IStream, S extends IStream = T> extends Generator<undefined, void, IChanValue<S>> {
-    readonly event: ProcessEvents.TAKE;
-    readonly channel: IChan<T, S>;
-    readonly isDone: boolean;
-    readonly altFlag: boolean;
-};
-export interface IProcSleepE {
-    (cb: () => void): boolean;
-    readonly event: ProcessEvents.SLEEP;
-    readonly channel: IChan<boolean>;
-    readonly isDone: boolean;
-};
-export type IProcE<P extends ProcessEvents, T extends IStream, S extends IStream = T> = P extends ProcessEvents.PUT ? IProcPutE<T, S> : P extends ProcessEvents.TAKE ? IProcTakeE<T, S> : P extends ProcessEvents.SLEEP ? IProcSleepE : never;
 
 export function put<T extends IStream, S extends IStream = T>(chan: IChan<T, S>, source: IChan<any, T> | (() => Generator<IChanValue<T>, any, any>), altFlag?: boolean): IProcPutE<T, S> {
     let isDone: boolean = false;
@@ -53,7 +31,7 @@ export function take<T extends IStream, S extends IStream = T>(chan: IChan<T, S>
         const pull: Generator<undefined, void, IChanValue<S>> | undefined = sink ? sink() : undefined;
         let done = false;
         let state: IChanValue<S> | undefined;
-        pull?.next();
+        if (!!pull) { pull.next(); }
         while (!done) {
             state = yield;
             if (state === undefined || state === CLOSED) { if (pull) { pull.return(); } isDone = true; break; }

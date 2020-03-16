@@ -1,9 +1,6 @@
 import { ProcessEvents, InstrTypes, IStream } from './constants';
-import { IChan } from './channels';
-import { IProcE, IProcPutE, IProcTakeE } from './processEvents'
-import { Instruction, InstructionGeneral, InstructionCallback } from './instructions';
-import { ProcessEventQ } from './processQueue';
-import CSP from './service';
+import { IChan, IProcE, IProcPutE, IProcTakeE, Instruction, InstructionGeneral, InstructionCallback, ProcessEventQ } from './interfaces'
+import { CSP } from './service';
 
 // scheduling functions
 export function queueImmediately<T extends IStream, S extends IStream = T>(proc: IProcE<ProcessEvents, T, S>) { (proc as IProcPutE<T, S> | IProcTakeE<T, S>).return(); }
@@ -48,4 +45,4 @@ export function queueFlushChannel<T extends IStream>(chan: IChan<T>) {
     if (CSP().has(chan)) {
         CSP().get(chan)!.flush();
     }
-};
+}

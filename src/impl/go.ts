@@ -1,8 +1,9 @@
 import { IStream, ProcessEvents } from './constants';
-import { chan, isChan, IChan, IChanValue } from './channels';
-import { take, put, sleep, IProcE, IProcPutE, IProcTakeE } from './processEvents';
-import CSP, { register } from './service';
-import { IProc, createAlts, createProcess } from './process';
+import { IChan, IChanValue, IProcE, IProcPutE, IProcTakeE, IProc, IAltsArgs, IAltsArgsPut } from './interfaces';
+import { chan, isChan, } from './channels';
+import { take, put, sleep, } from './processEvents';
+import { CSP } from './service';
+import { createAlts, createProcess, register } from './process';
 
 
 export const Ops: Map<Symbol, <T extends IStream = IStream, S extends IStream = T>(this: IChan<T, S>, ...rest: any[]) => IProcPutE<T, S> | IProcTakeE<T, S>> = (function () {
@@ -12,14 +13,6 @@ export const Ops: Map<Symbol, <T extends IStream = IStream, S extends IStream = 
     return ret;
 })();
 
-interface IAltsArgsPut<T extends IStream = IStream, S extends IStream = T> extends Iterable<IChan<T, S> | IChanValue<T>> {
-    readonly length: 2;
-    [0]: IChan<T, S>;
-    [1]: IChanValue<T>;
-};
-
-//
-export type IAltsArgs<T extends IStream = IStream, S extends IStream = T> = (IAltsArgsPut | IChan<T, S>);
 
 type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
 

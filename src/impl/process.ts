@@ -1,22 +1,27 @@
 import { IStream, ProcessEvents } from './constants';
-import { IProcE } from './processEvents';
+import { IChan, IChanValue, IProc, IProcE, ProcessEventQ, IGoordinator } from './interfaces';
 import { instruction, instructionCallback } from './instructions';
-import { createQ, ProcessEventQ } from './processQueue';
+import { createQ } from './processQueue';
 import { queueImmediately } from './scheduler';
 import { makeFakeThread } from './utils';
-import CSP, { register } from './service';
-import { IChan, IChanValue } from './channels';
+import { CSP } from './service';
 // Coordination of processes (IPC) via channels
-export interface IProc {
-    readonly events: IProcE<ProcessEvents, IStream>[];
-    readonly coordinator: Array<typeof KILL>;
-    // run(): Generator<Instruction<T>, void, IChanValue<T> | undefined>;
-    run(): void;
-    kill(): void;
-    // [Symbol.asyncIterator](): AsyncGenerator<IProc<ProcessEvents, T>, undefined, IChanValue<T> | undefined>;
-};
 
 export const KILL = function (this: IProc) { this.kill(); }
+
+// registry functions
+export function register(this: IGoordinator, process: IProc): void {
+    let event: IProcE<ProcessEvents, IStream>;
+    for (event of process.events)
+        if (!this.has(event.channel)) {
+            if (event.channel.hasXForm) {
+                this.set<typeof event.channel extends IChan<infer T> ? T : never>(event.channel, createQ(event.channel));
+            }
+            else {
+                this.set(event.channel, createQ<typeof event.channel extends IChan<infer T, infer _> ? T : never, typeof event.channel extends IChan<infer _, infer S> ? S : never>(event.channel));
+            }
+        }
+}
 
 // process creation function.
 export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, IStream>[]): IProc {

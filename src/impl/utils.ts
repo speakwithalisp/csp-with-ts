@@ -2,14 +2,14 @@
 export function* makeFakeThread() { yield; };
 
 // Transducer interface
-interface Reduced<A = any> {
-    '@@transducer/value': A;
-    '@@transducer/reduced': true;
+export declare interface Reduced<A = any> {
+    ['@@transducer/value']: A;
+    ['@@transducer/reduced']: true;
 };
-export interface IXForm<A = any, B = any> {
-    '@@transducer/init'(): A;
-    '@@transducer/result'(acc: A): A;
-    '@@transducer/step'(acc: A, x: B): A | Reduced<A>;
+export declare interface IXForm<A = any, B = any> {
+    ['@@transducer/init'](): A;
+    ['@@transducer/result'](acc: A): A;
+    ['@@transducer/step'](acc: A, x: B): A | Reduced<A>;
 };
 
 export type ITransducer<A = any, B = any, C = any> = (r: IXForm<C, B>) => IXForm<C, A>;

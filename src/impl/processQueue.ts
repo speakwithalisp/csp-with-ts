@@ -1,26 +1,11 @@
 import { CLOSED, MAX_DIRTY, InstrTypes, InstructionTakeStates, InstructionPutStates, IStream, ProcessEvents } from './constants';
+import { Instruction, InstructionGeneral, InstructionCallback, IChan, IChanValue, ProcessEventQ } from './interfaces';
 import { RingBuffer, ring } from './buffers';
-import { IChan, IChanValue, isChan } from './channels';
-import { Instruction, InstructionGeneral, InstructionCallback, instructionCallback } from './instructions';
+import { isChan } from './channels';
+import { instructionCallback } from './instructions';
 import { queueRecursiveAdd, queueFlushChannel } from './scheduler';
 import { makeFakeThread } from './utils';
-import CSP from './service';
-
-export interface ProcessEventQ<T extends IStream, S extends IStream = T> extends Iterable<Instruction<T, InstrTypes, S>> {
-    currentEventType: ProcessEvents | undefined;
-    // run(): void;
-    // add<T extends IStream>(instr: () => InstructionGeneral<T>): void;
-    add(instr: InstructionCallback<T, S> | (() => InstructionGeneral<T, S>) & {
-        readonly INSTRUCTION: InstrTypes.GENERAL;
-        readonly event: ProcessEvents;
-        readonly channel: IChan<T, S>;
-    }): void;
-    remove(): Instruction<T, InstrTypes, S> | undefined;
-    // addCallback<T extends IStream>(instr: InstructionCallback<T>): void;
-    flush(): void;
-    readonly length: number;
-    readonly channel: IChan<T, S>;
-};
+import { CSP } from './service';
 
 function drainToChan<T extends IStream>(chan: IChan<T, any>, source: Instruction<T, InstrTypes, any>): InstructionPutStates {
     if (source.event !== ProcessEvents.PUT) { return InstructionPutStates.NO_PUT_DEFAULT; }

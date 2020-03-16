@@ -1,5 +1,4 @@
-import { IChanValue } from './channels';
-import { Instruction } from './instructions';
+import { IChanValue, Instruction } from './interfaces';
 import { IStream, InstrTypes, MAX_QUEUE_SIZE } from './constants';
 function acopy<T extends IStream>(
     src: Array<IChanValue<T> | undefined> | Array<Instruction<T, InstrTypes> | undefined>,
@@ -296,7 +295,7 @@ export function sliding<T extends IStream>(n: number): SlidingBuffer<T> {
 //     return new PromiseBuffer<T>();
 // }
 
-export type BufferType<T extends IStream> =
+export declare type BufferType<T extends IStream> =
     FixedBuffer<T>
     | DroppingBuffer<T>
     | SlidingBuffer<T>;

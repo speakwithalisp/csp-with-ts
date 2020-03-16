@@ -1,29 +1,39 @@
 {
-  "include": [
-    "src"
-  ],
-  "compilerOptions": {
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "jsx": "react",
-    "downlevelIteration": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "module": "esnext",
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "target": "es5",
-    "strict": true
-  }
+    "include": ["src/**/*.ts", "src/**.d.ts"],
+    "filesGlob": ["src/**/*.ts"],
+    "files": ["src/index.ts",
+              "src/impl/interfaces.ts",
+              "src/impl/buffers.ts",
+              "src/impl/channels.ts",
+              "src/impl/constants.ts",
+              "src/impl/go.ts",
+              "src/impl/instructions.ts",
+              "src/impl/process.ts",
+              "src/impl/processEvents.ts",
+              "src/impl/processQueue.ts",
+              "src/impl/scheduler.ts",
+              "src/impl/service.ts",
+              "src/impl/utils.ts",
+              "src/index.d.ts"
+             ],
+    "compilerOptions": {
+        "strict": true,
+        "strictNullChecks": true,
+        "noImplicitThis": true,
+        "downlevelIteration": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "importHelpers": true,
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "isolatedModules": true,
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "target": "es6"
+    }
 }
