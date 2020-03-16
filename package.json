@@ -15,10 +15,10 @@
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
     "dependencies": {
-        "@types/node": "^12.0.0",
-        "tslib": "^1.11.1"
+        "@types/node": "^12.0.0"
     },
     "devDependencies": {
+        "tslib": "^1.11.1",
         "@tscc/tscc": "^0.4.8",
         "@types/ramda": "^0.26.43",
         "@types/react": "^16.9.0",
