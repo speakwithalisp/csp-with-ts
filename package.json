@@ -1,6 +1,6 @@
 {
     "name": "csp-with-ts",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "scripts": {
         "clean": "rm -rf lib",
         "build": "npm run clean && tscc && cp ./src/index.d.ts ./lib"
