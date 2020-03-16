@@ -4,3 +4,4 @@ config/
 .tscc_temp/
 public/
 scripts/
+yarn-error.log
