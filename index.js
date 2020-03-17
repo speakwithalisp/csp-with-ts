@@ -1,9 +1,9 @@
 'use strict';
 
 if (process.env.NODE_ENV === 'production') {
-    module.exports = require('./lib/min.index.js');
-} else {
-    var exp = require('./lib/index.js');
+    var exp = require('./lib/min.index.js');
     console.log(exp);
     module.exports = exp;
+} else {
+    module.exports = require('./lib/index.js');
 }
