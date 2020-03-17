@@ -16,6 +16,7 @@ export default {
     input: 'src/index.ts',
     output: [{
         name: pkg.main,
+        format: 'cjs',
         dir: 'lib'
     }
     ],
