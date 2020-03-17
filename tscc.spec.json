@@ -5,6 +5,7 @@
     },
     "compilerFlags": {
         "compilation_level": "ADVANCED",
-        "module_resolution": "NODE"
+        "module_resolution": "NODE",
+        "isolation_mode": "IIFE"
     }
 }
