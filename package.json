@@ -1,6 +1,6 @@
 {
     "name": "csp-with-ts",
-    "version": "0.6.37",
+    "version": "0.6.38",
     "scripts": {
         "clean": "rm -rf lib",
         "build": "npm run clean && rollup -c && tscc"
@@ -9,7 +9,9 @@
         "extends": "react-app"
     },
     "main": "./lib/production.index.js",
-    "files": ["lib"],
+    "files": [
+        "lib"
+    ],
     "types": "lib",
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
