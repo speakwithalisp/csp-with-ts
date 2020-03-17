@@ -19,6 +19,7 @@ export declare type IChanValue<T extends IStream> = IntChanV<T>;
 export declare type IAltsArgs<T extends IStream = IStream, S extends IStream = T> = IAA<T, S>;
 export declare type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
 
+/// <reference path="module.d.ts" />
 export { isReduced } from './impl/utils';
 export { dropping, fixed, sliding } from './impl/buffers';
 export { chan, isChan } from './impl/channels';
