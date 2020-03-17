@@ -15,7 +15,7 @@ const override = {
 export default {
     input: 'src/index.ts',
     output: [{
-        name: './lib/index.js',
+        name: pkg.main,
         format: 'cjs',
         dir: 'lib'
     }
