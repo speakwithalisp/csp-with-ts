@@ -1,6 +1,6 @@
 {
     "name": "csp-with-ts",
-    "version": "0.6.401",
+    "version": "0.6.402",
     "scripts": {
         "clean": "rm -rf lib",
         "rename:prod": "mv ./lib/production.index.js ./lib/index.min.js && mv ./lib/production.index.js.map ./lib/index.min.js.map",
