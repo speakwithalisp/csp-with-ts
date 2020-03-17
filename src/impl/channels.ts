@@ -168,7 +168,7 @@ class XChannel<T extends IStream, Q extends IStream = T> implements IChan<T, Q> 
     }
 }
 
-export function chan<T extends IStream, Q extends IStream = T>(buf?: number | BufferType<Q> | BufferType<T>, xform?: ITransducer<IChanValue<T>, IChanValue<Q>, BufferType<Q>>, exHandler?: Function): IChan<T> | IChan<T, Q> {
+export function chan<T extends IStream, Q extends IStream = T>(buf?: number | BufferType<Q extends T ? T : Q>, xform?: ITransducer<IChanValue<T>, IChanValue<Q>, BufferType<Q>>, exHandler?: Function): IChan<T> | IChan<T, Q> {
     if (xform === undefined) {
         const buffer = buf === undefined ? fixed<T>(1) : typeof buf === 'number' && buf > 0 ? fixed<T>(buf) : buf as BufferType<T>;
         return new NoXChannel<T>(buffer);

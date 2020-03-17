@@ -3,12 +3,13 @@
     "version": "0.6.39",
     "scripts": {
         "clean": "rm -rf lib",
-        "build": "npm run clean && rollup -c && tscc"
+        "rename:prod": "mv ./lib/production.index.js ./lib/index.min.js && mv ./lib/production.index.js.map ./lib/index.min.js.map",
+        "build": "npm run clean && rollup -c && tscc && npm run rename:prod"
     },
     "eslintConfig": {
         "extends": "react-app"
     },
-    "main": "./lib/index.js",
+    "main": "lib/index",
     "files": [
         "lib"
     ],

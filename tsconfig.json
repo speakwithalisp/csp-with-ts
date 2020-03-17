@@ -13,8 +13,7 @@
               "src/impl/processQueue.ts",
               "src/impl/scheduler.ts",
               "src/impl/service.ts",
-              "src/impl/utils.ts",
-              "src/module.d.ts"
+              "src/impl/utils.ts"
              ],
     "compilerOptions": {
         "strict": true,
