@@ -8,14 +8,15 @@ const override = {
         module: "esnext",
         "declaration": true,
         "declarationMap": true,
-        "declarationDir": "lib/"
+        "declarationDir": "lib/",
+        "removeComments": true
     }
 };
 
 export default {
     input: 'src/index.ts',
     output: [{
-        name: pkg.main,
+        name: "./lib/index.js",
         format: 'cjs',
         dir: 'lib'
     }
@@ -26,13 +27,13 @@ export default {
     ],
     plugins: [
         resolve(),
+        tscc({
+            specFile: "./tscc.spec.json"
+        }),
         typescript({
             useTsconfigDeclarationDir: true,
             tsconfigOverride: override,
             typescript: require('typescript')
-        }),
-        tscc({
-            specFile: "./tscc.spec.json"
-        }),
+        })
     ]
 }
