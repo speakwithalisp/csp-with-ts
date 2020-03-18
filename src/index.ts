@@ -1,3 +1,4 @@
+var Goog: any;
 import { CSP as csp } from './impl/service';
 import { register } from './impl/process';
 import { IStream as IStreamInternal } from './impl/constants';
@@ -35,9 +36,20 @@ export declare type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T,
 
 // relevant function imports and assigns
 export function CSP(): IGoordinator { return csp(register); }
+Goog.symbolExport('CSP', CSP);
+import { isReduced } from './impl/utils';
+Goog.symbolExport('isReduced', isReduced);
+import { dropping, fixed, sliding } from './impl/buffers';
+Goog.symbolExport('dropping', dropping);
+Goog.symbolExport('fixed', fixed);
+Goog.symbolExport('sliding', sliding);
+import { chan, isChan } from './impl/channels';
+Goog.symbolExport('chan', chan);
+Goog.symbolExport('isChan', isChan);
+import { putAsync, takeAsync } from './impl/processEvents';
+Goog.symbolExport('putAsync', putAsync);
+Goog.symbolExport('takeAsync', takeAsync);
+import { go, timeout } from './impl/go';
+Goog.symbolExport('go', go);
+Goog.symbolExport('timeout', timeout);
 
-export { isReduced } from './impl/utils';
-export { dropping, fixed, sliding } from './impl/buffers';
-export { chan, isChan } from './impl/channels';
-export { putAsync, takeAsync } from './impl/processEvents';
-export { go, timeout } from './impl/go';

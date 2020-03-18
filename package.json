@@ -4,7 +4,7 @@
     "scripts": {
         "clean": "rm -rf lib",
         "rename:prod": "mv ./lib/production.index.js ./lib/index.min.js && mv ./lib/production.index.js.map ./lib/index.min.js.map",
-        "build": "npm run clean && rollup -c && tscc && npm run rename:prod"
+        "build": "npm run clean && rollup -c && tscc"
     },
     "eslintConfig": {
         "extends": "react-app"
@@ -17,7 +17,8 @@
     "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
     "license": "GPL-3.0",
     "dependencies": {
-        "@types/node": "^12.0.0"
+        "@types/node": "^12.0.0",
+        "google-closure-library": "^20200224.0.0"
     },
     "homepage": "https://github.com/owner/project#readme",
     "repository": {
