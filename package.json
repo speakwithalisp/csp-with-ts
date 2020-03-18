@@ -4,7 +4,7 @@
     "scripts": {
         "clean": "rm -rf lib",
         "rename:prod": "mv ./lib/production.index.js ./lib/index.min.js && mv ./lib/production.index.js.map ./lib/index.min.js.map",
-        "build": "npm run clean && rollup -c && tscc"
+        "build": "npm run clean && rollup -c"
     },
     "eslintConfig": {
         "extends": "react-app"
