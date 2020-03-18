@@ -26,7 +26,6 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "importHelpers": true,
-        "allowJs":true,
         "moduleResolution": "node",
         "module": "commonjs",
         "sourceMap": true,

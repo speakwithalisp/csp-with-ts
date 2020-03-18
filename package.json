@@ -1,10 +1,10 @@
 {
     "name": "csp-with-ts",
-    "version": "0.6.44",
+    "version": "0.6.5",
     "scripts": {
         "clean": "rm -rf lib",
         "rename:prod": "mv ./lib/production.index.js ./lib/index.min.js && mv ./lib/production.index.js.map ./lib/index.min.js.map",
-        "build": "npm run clean && rollup -c"
+        "build": "npm run clean && rollup -c && tscc && npm run rename:prod"
     },
     "eslintConfig": {
         "extends": "react-app"
