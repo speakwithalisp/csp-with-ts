@@ -1,4 +1,3 @@
-var Goog: any;
 import { CSP as csp } from './impl/service';
 import { register } from './impl/process';
 import { IStream as IStreamInternal } from './impl/constants';
@@ -21,40 +20,10 @@ export declare type IProc = IP;
 export declare type IAltsArgs<T extends IStream = IStream, S extends IStream = T> = IAA<T, S>;
 export declare type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
 
-// var declarations
-export declare var isReduced: <A = any >(val: any) => val is Reduced<A>;
-export declare var chan: <T extends IStream, Q extends IStream = T> (buf?: number | BufferType<Q extends T ? T : Q>, xform?: ITransducer<IChanValue<T>, IChanValue<Q>, BufferType<Q>>, exHandler?: Function) => (IChan<T> | IChan<T, Q>);
-export declare var isChan: <T extends IStream, Q extends IStream = T>(obj: any) => obj is IChan<T, Q>;
-export declare var dropping: <T extends IStream = IStream>(n: number) => DroppingBuffer<T>;
-export declare var sliding: <T extends IStream = IStream>(n: number) => SlidingBuffer<T>;
-export declare var fixed: <T extends IStream = IStream>(n: number) => FixedBuffer<T>;
-export declare var putAsync: <T extends IStream = IStream, S extends IStream = T>(ch: IChan<T, S>, val: T, close?: boolean, cb?: () => any | void) => void;
-export declare var takeAsync: <T extends IStream = IStream, S extends IStream = T>(ch: IChan<T, S>) => Promise<IChanValue<S>>;
-export declare var go: <T extends IStream = IStream, S extends IStream = IStream> (strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]) => (() => void);
-export declare var timeout: (msec: number) => IChan<boolean>;
-
-
-// relevant function imports and assigns
 export function CSP(): IGoordinator { return csp(register); }
-Goog.symbolExport('CSP', CSP);
-import { isReduced as iR } from './impl/utils';
-isReduced = iR;
-Goog.symbolExport('isReduced', isReduced);
-import { dropping as d, fixed as f, sliding as sl } from './impl/buffers';
-dropping = d; fixed = f; sliding = sl;
-Goog.symbolExport('dropping', dropping);
-Goog.symbolExport('fixed', fixed);
-Goog.symbolExport('sliding', sliding);
-import { chan as ch, isChan as isCh } from './impl/channels';
-chan = ch; isChan = isCh;
-Goog.symbolExport('chan', chan);
-Goog.symbolExport('isChan', isChan);
-import { putAsync as pA, takeAsync as tA } from './impl/processEvents';
-putAsync = pA; takeAsync = tA;
-Goog.symbolExport('putAsync', putAsync);
-Goog.symbolExport('takeAsync', takeAsync);
-import { go as g, timeout as t } from './impl/go';
-go = g; timeout = t;
-Goog.symbolExport('go', go);
-Goog.symbolExport('timeout', timeout);
+export { isReduced } from './impl/utils';
+export { dropping, fixed, sliding } from './impl/buffers';
+export { chan, isChan } from './impl/channels';
+export { putAsync, takeAsync } from './impl/processEvents';
+export { go, timeout } from './impl/go';
 

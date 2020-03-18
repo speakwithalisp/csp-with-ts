@@ -1,15 +1,6 @@
 {
     "prefix": { "rollup": "lib/", "cc": "lib/" },
     "modules": {
-        "index": {
-            "entry": "src/index.ts",
-            "extraSources": ["./node_modules/google-closure-library/closure/goog/base.js"]
-        }
-    },
-    "compilerFlags": {
-        "generate_exports": true
-    },
-    "external": {
-        "google-closure-library/closure/goog/base.js": "Goog"
+        "index":  "src/index.ts"
     }
 }
