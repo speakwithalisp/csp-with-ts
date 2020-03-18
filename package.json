@@ -9,7 +9,7 @@
     "eslintConfig": {
         "extends": "react-app"
     },
-    "main": "lib/index",
+    "main": "lib/index.min.js",
     "files": [
         "lib"
     ],
