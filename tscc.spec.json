@@ -1,6 +1,10 @@
 {
     "prefix": { "rollup": "lib/", "cc": "lib/" },
     "modules": {
-        "index":  "src/index.ts"
+        "index":  "src/index.ts",
+        "operations": {
+            "entry": "src/operations.ts",
+            "dependencies": [ "index" ]
+        }
     }
 }

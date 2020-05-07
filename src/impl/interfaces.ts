@@ -79,10 +79,11 @@ export declare interface ProcessEventQ<T extends IStream, S extends IStream = T>
 
 export declare interface IProc {
     readonly events: IProcE<ProcessEvents, IStream>[];
-    readonly coordinator: Array<(this: IProc) => void>;
+    // readonly coordinator: Array<(this: IProc) => void>;
     // run(): Generator<Instruction<T>, void, IChanValue<T> | undefined>;
     run(): void;
     kill(): void;
+    notify(): Generator<undefined, void, undefined>;
     // [Symbol.asyncIterator](): AsyncGenerator<IProc<ProcessEvents, T>, undefined, IChanValue<T> | undefined>;
 };
 

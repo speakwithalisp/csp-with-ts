@@ -16,7 +16,7 @@ export const Ops: Map<Symbol, <T extends IStream = IStream, S extends IStream = 
 
 type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
 
-export function go<T extends IStream = IStream, S extends IStream = IStream>(strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): () => void {
+export function go<T extends IStream = IStream, S extends IStream = IStream>(strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): IProc {
     let chann: IChan<T, S> | IChan<S> | IChan<T>, operand: (() => Generator<any, any, any>) | IChan<T, S> | IChan<T> | IChan<S> | null = null;
     let pred: (() => boolean) | undefined = undefined;
     let argVals = [...args];
@@ -69,7 +69,8 @@ export function go<T extends IStream = IStream, S extends IStream = IStream>(str
     if (check !== procLength) { throw new Error("number of processes mismatch with the syntax"); }
     const process: IProc = createProcess(...processEvs);
     process.run();
-    return process.kill.bind(process);
+    // return process.kill.bind(process);
+    return process;
 }
 
 export function timeout(msec: number): IChan<boolean> {

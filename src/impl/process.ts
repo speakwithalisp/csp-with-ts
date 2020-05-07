@@ -27,6 +27,7 @@ export function register(this: IGoordinator, process: IProc): void {
 export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, IStream>[]): IProc {
     //TODO: Add backPressure queue
     // const coordinator: typeof KILL[] = new Array(1);
+    const runtime = makeFakeThread();
     let procEvents = procEventsArgs.reverse();
     function* makeThread(procInstance: IProc): Generator<undefined, void, undefined | Generator<undefined, void, undefined>> {
         if (!procEvents.length || procEvents.every(proc => proc.isDone)) { // coordinator.push(KILL.bind(procInstance));
@@ -64,6 +65,7 @@ export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, 
                     }
                 }
                 procEvents = [];
+                runtime.return();
             }
         },
         run: {
@@ -72,6 +74,11 @@ export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, 
                 thread.next();
                 thread.next(thread);
             }
+        },
+        notify: {
+            value(): Generator<undefined, void, undefined> {
+                return runtime;
+            }
         }
     });
     register.apply(CSP(), [ret]);
@@ -79,6 +86,7 @@ export function createProcess(...procEventsArgs: IProcE<ProcessEvents, IStream, 
 }
 
 export function createAlts(returnChan: IChan<IStream>, winVal: { readonly val: IChanValue<IStream> | undefined; done?: boolean; setVal(val: IChanValue<IStream>): void }, altFlag: boolean, ...processEvents: IProcE<ProcessEvents, IStream, IStream>[]): IProc {
+    const runtime = makeFakeThread();
     function* makeThread(procInst: IProc): Generator<undefined, void, undefined | Generator<undefined, void, undefined>> {
         let proc: IProcE<ProcessEvents, IStream>;
         const thread: undefined | Generator<undefined, void, undefined> = yield;
@@ -127,6 +135,7 @@ export function createAlts(returnChan: IChan<IStream>, winVal: { readonly val: I
                 }
                 returnChan.altFlag = altFlag;
                 returnChan.close();
+                runtime.return();
             }
         },
         run: {
@@ -135,7 +144,13 @@ export function createAlts(returnChan: IChan<IStream>, winVal: { readonly val: I
                 thread.next();
                 thread.next(thread);
             }
+        },
+        notify: {
+            value(): Generator<undefined, void, undefined> {
+                return runtime;
+            }
         }
+
     });
     if (!CSP().has(returnChan)) { CSP().set(returnChan, createQ<IStream>(returnChan)); }
     register.apply(CSP(), [proc]);

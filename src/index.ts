@@ -4,6 +4,7 @@ import { IStream as IStreamInternal } from './impl/constants';
 import { BufferType as BT, DroppingBuffer as DB, SlidingBuffer as SB, FixedBuffer as FB } from './impl/buffers';
 import { IChan as IntChan, IProc as IP, IChanValue as IntChanV, IAltsArgs as IAA, IGoordinator } from './impl/interfaces';
 import { ITransducer as IT, Reduced as R, IXForm as IX } from './impl/utils';
+import { go as _go_ } from './impl/go';
 
 //type declarations
 export declare type BufferType<T extends IStream> = BT<T>;
@@ -25,5 +26,10 @@ export { isReduced } from './impl/utils';
 export { dropping, fixed, sliding } from './impl/buffers';
 export { chan, isChan } from './impl/channels';
 export { putAsync, takeAsync } from './impl/processEvents';
-export { go, timeout } from './impl/go';
+export { timeout } from './impl/go';
+
+export function go<T extends IStream = IStream, S extends IStream = IStream>(strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): () => void {
+    const goProc: IProc = _go_<T, S>(strings, ...args);
+    return goProc.kill.bind(goProc);
+}
 
