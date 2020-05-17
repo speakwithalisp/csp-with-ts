@@ -3,7 +3,7 @@ import { IChan, IChanValue, IProcE, IProcPutE, IProcTakeE, IProc, IAltsArgs, IAl
 import { chan, isChan, } from './channels';
 import { take, put, sleep, } from './processEvents';
 import { CSP } from './service';
-import { createAlts, createProcess, register } from './process';
+import { createAlts, createProcess, register, isProcess } from './process';
 
 
 export const Ops: Map<Symbol, <T extends IStream = IStream, S extends IStream = T>(this: IChan<T, S>, ...rest: any[]) => IProcPutE<T, S> | IProcTakeE<T, S>> = (function () {
@@ -14,30 +14,51 @@ export const Ops: Map<Symbol, <T extends IStream = IStream, S extends IStream = 
 })();
 
 
-type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any);
+type IGoArgs<T extends IStream, S extends IStream = T> = IChan<T, S> | (() => Generator<any, any, any>) | IAltsArgs<T, S>[] | (() => boolean) | ((val: IChanValue<T>) => any) | IProc;
 
-export function go<T extends IStream = IStream, S extends IStream = IStream>(strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): IProc {
-    let chann: IChan<T, S> | IChan<S> | IChan<T>, operand: (() => Generator<any, any, any>) | IChan<T, S> | IChan<T> | IChan<S> | null = null;
+export function go<T extends IStream = IStream, S extends IStream = T>(this: void | ((val: IChanValue<S>) => void), strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): IProc {
+    const hook = this;
+    let chann: IChan<T, S> | IChan<S> | IChan<T>, operand: (() => Generator<any, any, any>) | IChan<T, S> | IChan<T> | IChan<S> | IProc | null = null;
     let pred: (() => boolean) | undefined = undefined;
     let argVals = [...args];
-    const processEvs: IProcE<ProcessEvents, T | S, S | T>[] = [];
+    const processEvs: (IProcE<ProcessEvents, T | S, S | T> | IProc)[] = [];
     const procLength = strings.join('').split(';').length;
     let check: number = 1, stringsArr: string[] = [];
     for (let i = 0; i < strings.length; i++) {
         if (strings[i].replace(/\s+/, '') === '') { continue; }
         if (strings[i].match(/;/)) {
-            stringsArr.push(';'); stringsArr.push(...strings[i].split(';'));
+            stringsArr.push(';'); stringsArr.push(...strings[i].split(';').filter(s => s !== ''));
             continue;
         }
         stringsArr.push(strings[i]);
     }
-    for (let i = 0; i < stringsArr.length; i++) {
+    const strLen = stringsArr.length - 1;
+    for (let i = 0; i < strLen + 1; i++) {
         let op = stringsArr[i].trim();
-        if (op === '>!') {
+        if (op === 'eval') {
+            const startCondn: boolean = i === 0 && (stringsArr[i + 1] !== ';');
+            const endCondn: boolean = i > 0 && i === strLen && (stringsArr[i - 1] !== ';');
+            const genCondn: boolean = i > 0 && i < strLen && !(stringsArr[i - 1] === ';' && stringsArr[i + 1] === ';');
+            const singletonCondn: boolean = i === 0 && strLen === 0;
+            if (!singletonCondn && (startCondn || endCondn || genCondn)) {
+                throw new Error("malformed syntax for eval. Eval processes can only exist as a single statement");
+            }
+            else {
+                const oprnd: IProc = argVals.shift()! as IProc;
+                //   console.log(oprnd);
+                if (!isProcess(oprnd)) {
+                    throw new Error("malformed syntax for eval. No process was passed after eval keyword");
+                }
+                else {
+                    processEvs.push(oprnd);
+                }
+            }
+        }
+        else if (op === '>!') {
             chann = argVals.shift()! as IChan<T, S>;
             if (stringsArr[i + 1] !== undefined && stringsArr[i + 1].trim() === '?:') {
                 let localAltsArgs: IAltsArgs<T, S>[] | undefined = argVals.shift() as IAltsArgs<T, S>[] | undefined;
-                if (localAltsArgs !== undefined) { operand = alts.apply<null, IAltsArgs<T, S>[], IChan<S>>(null, localAltsArgs); }
+                if (localAltsArgs !== undefined) { const { process, channel }: { process: IProc; channel: IChan<S> } = alts.apply<null, IAltsArgs<T, S>[], { process: IProc; channel: IChan<S>; }>(null, localAltsArgs); operand = channel; processEvs.push(process); }
             } else {
                 operand = argVals.shift()! as IChan<T> | (() => Generator<IChanValue<T>, any, undefined>);
             }
@@ -51,16 +72,24 @@ export function go<T extends IStream = IStream, S extends IStream = IStream>(str
                 if (argVals.length) { operand = argVals.shift()! as () => Generator<undefined, any, IChanValue<S>>; }
                 if (argVals.length) { pred = argVals.shift() as () => boolean; }
             }
-            else if (stringsArr[i + 1] && stringsArr[i + 1].indexOf(';') === -1) {
+            // Changed (untested )from
+            // else if (stringsArr[i + 1] && stringsArr[i + 1].indexOf(';') === -1) {
+            //     operand = argVals.shift()! as () => Generator<undefined, any, IChanValue<T>>;
+            // }
+            else if (stringsArr[i + 1] && stringsArr[i + 1].indexOf(';') !== -1) {
                 operand = argVals.shift()! as () => Generator<undefined, any, IChanValue<T>>;
             }
-            else { operand = function* () { while (true) { yield; } }; }
+            // Changed (untested )from
+            // else { operand = function* () { while (true) { yield; } }; }
+            else { operand = function* () { yield; }; }
             processEvs.push((Ops.get(Symbol.for('<!'))! as (this: IChan<T, S>, ...args: any[]) => IProcTakeE<T, S>).apply<IChan<T, S>, any[], IProcTakeE<T, S>>(chann, [operand!, pred]));
         }
         else if (op === '?:' && (i === 0 || stringsArr[i - 1].indexOf(';') !== -1)) {
-            chann = alts.apply<null, IAltsArgs<T, S>[], IChan<S>>(null, argVals.shift()! as IAltsArgs<T, S>[]);
-            const callback = argVals.shift()! as (val: IChanValue<T>) => any;
-            operand = function* () { const val = yield; callback(val); chann.close(); }
+            const tmp: { process: IProc; channel: IChan<S> } = alts.apply<null, IAltsArgs<T, S>[], { process: IProc; channel: IChan<S>; }>(null, argVals.shift()! as IAltsArgs<T, S>[]);
+            chann = tmp.channel;
+            const callback = argVals.shift()! as (val: IChanValue<S>) => any;
+            operand = function* () { const val = yield; callback(val); chann.close(); if (hook) { hook!(val); }; }
+            processEvs.push(tmp.process);
             processEvs.push((Ops.get(Symbol.for('<!'))! as <R extends IStream>(this: IChan<R>, ...args: any[]) => IProcTakeE<R>).apply<IChan<S>, any[], IProcTakeE<S>>(chann, [operand]));
         }
         else if (stringsArr[i].indexOf(';') !== -1) { check++; }
@@ -68,7 +97,6 @@ export function go<T extends IStream = IStream, S extends IStream = IStream>(str
     }
     if (check !== procLength) { throw new Error("number of processes mismatch with the syntax"); }
     const process: IProc = createProcess(...processEvs);
-    process.run();
     // return process.kill.bind(process);
     return process;
 }
@@ -94,7 +122,7 @@ function isAltsPut<T extends IStream, S extends IStream = T>(val: any): val is I
     return false;
 }
 
-export function alts<T extends IStream = IStream, S extends IStream = T>(...args: IAltsArgs<T, S>[]): IChan<S> {
+export function alts<T extends IStream = IStream, S extends IStream = T>(...args: IAltsArgs<T, S>[]): { process: IProc; channel: IChan<S> } {
     let processEvs: IProcE<ProcessEvents, T, S>[] = [];
     let winningVal: IChanValue<S> | undefined;
     let altFlag: boolean = true;
@@ -117,6 +145,5 @@ export function alts<T extends IStream = IStream, S extends IStream = T>(...args
         }
     }
     const proc: IProc = createAlts(returnChan, winVal, altFlag, ...processEvs);
-    proc.run();
-    return returnChan;
+    return { process: proc, channel: returnChan };
 }

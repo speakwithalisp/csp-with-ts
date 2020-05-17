@@ -17,6 +17,7 @@ function drainToChan<T extends IStream>(chan: IChan<T, any>, source: Instruction
             if (value === undefined) { return InstructionPutStates.DONE; }
             else {
                 chan.add(value);
+                if (!!(source as InstructionCallback<T, any>).close) { chan.close(); }
                 return InstructionPutStates.DONE;
             }
         case InstrTypes.GENERAL:
@@ -60,6 +61,7 @@ function takeFromChan<T extends IStream>(chan: IChan<any, T>, sink: Instruction<
     switch (sink.INSTRUCTION) {
         case InstrTypes.CALLBACK:
             (sink as InstructionCallback<any, T>)(value);
+            if ((sink as InstructionCallback<any, T>).close) { chan.close(); }
             return InstructionTakeStates.DONE;
         case InstrTypes.GENERAL:
             done = !!(sink as InstructionGeneral<any, T>).next(value).done;
@@ -101,8 +103,14 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                 if (instru.channel === chan && instru.event === ProcessEvents.TAKE && instr.INSTRUCTION === InstrTypes.GENERAL) { (instr as InstructionGeneral<T, S>).next(); }
                 switch (currentEventType) {
                     case instr.event: if (buffer.length >= MAX_DIRTY) {
-                        if (instr.INSTRUCTION === InstrTypes.GENERAL) { (instr as InstructionGeneral<T, S>).return(); }
-                        else { (instr as InstructionCallback<T, S>)(); }
+                        buffer.cleanup((ev: Instruction<T, InstrTypes, S>) => !(ev.INSTRUCTION === InstrTypes.GENERAL && (ev as InstructionGeneral<T, S>).stale));
+                        if (buffer.length < MAX_DIRTY) {
+                            buffer.unboundedUnshift(instr);
+                        }
+                        else {
+                            if (instr.INSTRUCTION === InstrTypes.GENERAL) { (instr as InstructionGeneral<T, S>).return(); }
+                            else { (instr as InstructionCallback<T, S>)(); }
+                        }
                         return;
                     }
                     else if (instr.event !== ProcessEvents.PUT) {

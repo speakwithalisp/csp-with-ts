@@ -17,7 +17,7 @@ export default {
     input: 'src/index.ts',
     output: [{
         name: "./lib/index.js",
-        format: 'cjs',
+        format: 'commonjs',
         dir: 'lib'
     }
     ],

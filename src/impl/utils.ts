@@ -1,12 +1,22 @@
 // Make fake thread
-export function* makeFakeThread() { yield; };
+export function* makeFakeThread() { yield; }
+export function* makeInfiniteThread() {
+    try {
+        while (true) {
+            yield;
+        }
+    }
+    finally {
+        console.log("it's over. It's done");
+    }
+}
 
 // Transducer interface
-export declare interface Reduced<A = any> {
+export interface Reduced<A = any> {
     ['@@transducer/value']: A;
     ['@@transducer/reduced']: true;
 };
-export declare interface IXForm<A = any, B = any> {
+export interface IXForm<A = any, B = any> {
     ['@@transducer/init'](): A;
     ['@@transducer/result'](acc: A): A;
     ['@@transducer/step'](acc: A, x: B): A | Reduced<A>;

@@ -28,19 +28,24 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
                     }
                     // if (ch.isFull()) { break; }
                     ({ value, done } = event.next());
-                    if (value === undefined || done) { event.return(); break; }
+                    if (value === undefined || done) {
+                        if (value !== undefined) { yield value; }
+                        event.return();
+                        break;
+                    }
                     yield value;
                 }
             }
             else if (event.event === ProcessEvents.TAKE) {
                 if (ch === event.channel) { event.next(); }
-                let state: IChanValue<S> | undefined;
+                let state: IChanValue<S> | undefined, done: boolean | undefined;
                 while (true) {
                     state = yield;
+                    //             console.log('in de state', state);
                     // if (event.altFlag) { ch.altFlag = false; }
                     if (state === undefined || state === CLOSED) { event.return(); break; }
-                    event.next(state as IChanValue<S>);
-                    if (event.altFlag) { setImmediate(queueNextOnThread, thread); event.return(); break; }
+                    ({ done } = event.next(state as IChanValue<S>));
+                    if (event.altFlag || done) { setImmediate(queueNextOnThread, thread); event.return(); break; }
                 }
             }
         }
@@ -50,7 +55,7 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
         }
     }
     Object.defineProperties(instr, { INSTRUCTION: { get() { return InstrTypes.GENERAL; } }, channel: { get() { return ch; } }, event: { get() { return event.event; } }, thread: { get() { return thread; } } });
-    Object.defineProperties(instr.prototype, { INSTRUCTION: { get() { return InstrTypes.GENERAL; } }, channel: { get() { return ch; } }, event: { get() { return event.event; } }, thread: { get() { return thread; } } });
+    Object.defineProperties(instr.prototype, { INSTRUCTION: { get() { return InstrTypes.GENERAL; } }, channel: { get() { return ch; } }, stale: { get() { return event.isDone; } }, event: { get() { return event.event; } }, thread: { get() { return thread; } } });
     return instr as (() => InstructionGeneral<T, S>) & {
         readonly INSTRUCTION: InstrTypes.GENERAL;
         readonly event: ProcessEvents;

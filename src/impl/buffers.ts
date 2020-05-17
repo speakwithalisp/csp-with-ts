@@ -295,7 +295,7 @@ export function sliding<T extends IStream>(n: number): SlidingBuffer<T> {
 //     return new PromiseBuffer<T>();
 // }
 
-export declare type BufferType<T extends IStream> =
+export type BufferType<T extends IStream> =
     FixedBuffer<T>
     | DroppingBuffer<T>
     | SlidingBuffer<T>;
