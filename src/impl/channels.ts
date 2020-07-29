@@ -13,14 +13,17 @@ import { queueFlushChannel } from './scheduler';
 //     | checking
 //     `----
 
+abstract class Channel<T extends IStream, Q extends IStream = T> {
+}
 
-class NoXChannel<T extends IStream> implements IChan<T> {
+class NoXChannel<T extends IStream> extends Channel<T> implements IChan<T> {
     buffer: BufferType<T>;
     altFlag: boolean;
     private _closed: boolean;
     private _lastVal: IChanValue<T>;
 
     constructor(buf: BufferType<T>) {
+        super();
         this.buffer = buf;
         this._closed = false;
         this._lastVal = CLOSED;
@@ -119,7 +122,7 @@ function handleException<T extends IStream, S extends IStream>(exHandler?: Funct
         });
 }
 
-class XChannel<T extends IStream, Q extends IStream = T> implements IChan<T, Q> {
+class XChannel<T extends IStream, Q extends IStream = T> extends Channel<T, Q> implements IChan<T, Q> {
     buffer: BufferType<Q>;
     altFlag: boolean;
     private xform: IXForm<BufferType<Q>, IChanValue<T>>;
@@ -127,6 +130,7 @@ class XChannel<T extends IStream, Q extends IStream = T> implements IChan<T, Q> 
     private _lastVal: IChanValue<Q>;
 
     constructor(buf: BufferType<Q>, xform: IXForm<BufferType<Q>, IChanValue<T>>) {
+        super();
         this.buffer = buf;
         this.xform = xform;
         this._closed = false;
@@ -179,7 +183,8 @@ export function chan<T extends IStream, Q extends IStream = T>(buf?: number | Bu
 }
 
 export function isChan<T extends IStream, Q extends IStream = T>(obj: any): obj is IChan<T, Q> {
-    if (obj instanceof XChannel) { return true; }
-    else if (obj instanceof NoXChannel) { return true; }
+    if (obj instanceof Channel) { return true; }
+    // if (obj instanceof XChannel) { return true; }
+    // else if (obj instanceof NoXChannel) { return true; }
     return false;
 }

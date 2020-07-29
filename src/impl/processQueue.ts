@@ -7,6 +7,8 @@ import { queueRecursiveAdd, queueFlushChannel } from './scheduler';
 import { makeFakeThread } from './utils';
 import { CSP } from './service';
 
+// Handle stale putters and takers that are in the queue.
+
 function drainToChan<T extends IStream>(chan: IChan<T, any>, source: Instruction<T, InstrTypes, any>): InstructionPutStates {
     if (source.event !== ProcessEvents.PUT) { return InstructionPutStates.NO_PUT_DEFAULT; }
     if (chan.isFull()) { return InstructionPutStates.NO_PUT_CHAN_FULL; }
@@ -103,9 +105,15 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                 if (instru.channel === chan && instru.event === ProcessEvents.TAKE && instr.INSTRUCTION === InstrTypes.GENERAL) { (instr as InstructionGeneral<T, S>).next(); }
                 switch (currentEventType) {
                     case instr.event: if (buffer.length >= MAX_DIRTY) {
-                        buffer.cleanup((ev: Instruction<T, InstrTypes, S>) => !(ev.INSTRUCTION === InstrTypes.GENERAL && (ev as InstructionGeneral<T, S>).stale));
+                        buffer.cleanup((ev: Instruction<T, InstrTypes, S>) => ev.INSTRUCTION !== InstrTypes.CALLBACK && !(ev.INSTRUCTION === InstrTypes.GENERAL && (ev as InstructionGeneral<T, S>).stale));
                         if (buffer.length < MAX_DIRTY) {
-                            buffer.unboundedUnshift(instr);
+                            if (buffer.length === 0) { currentEventType = undefined; }
+                            if (instr.event === ProcessEvents.PUT) {
+
+                                setImmediate(queueRecursiveAdd, this, this, instr);
+                            }
+
+                            else { buffer.unboundedUnshift(instr); }
                         }
                         else {
                             if (instr.INSTRUCTION === InstrTypes.GENERAL) { (instr as InstructionGeneral<T, S>).return(); }
@@ -150,13 +158,17 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                             // if (instr.INSTRUCTION === InstrTypes.GENERAL && instr.channel === chan) { (instr as InstructionGeneral<T>).next(); }
                             let eventState: InstructionTakeStates;
                             while (buffer.length) {
-                                (buffer.pop() as InstructionCallback<T, S>)();
+                                // const sleeper: InstructionCallback<T, S> = buffer.pop() as InstructionCallback<T, S>;
+                                const sleeper = buffer.pop() as Instruction<T, InstrTypes, S>;
+                                if (sleeper.INSTRUCTION === InstrTypes.CALLBACK) { (sleeper as InstructionCallback<T, S>)() };
+                                // (buffer.pop() as InstructionCallback<T, S>)();
                             }
                             do {
                                 eventState = takeFromChan(chan, instr);
                                 switch (eventState) {
                                     case InstructionTakeStates.DONE: chan.remove(); break;
                                     case InstructionTakeStates.CHAN_VALUE_OPEN:
+
                                         setImmediate(queueRecursiveAdd, CSP().get(chan.last() as IChan<T>), this, instr /*, 'addCallback' */);
                                         break;
                                     case InstructionTakeStates.CHAN_VALUE_CLOSED:
@@ -185,6 +197,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                     else {
                                         switch (takeFromChan(chan, other)) {
                                             case InstructionTakeStates.CHAN_VALUE_OPEN:
+
                                                 setImmediate(queueRecursiveAdd, CSP().get(chan.last() as IChan<T>), this, other /*, other.INSTRUCTION === InstrTypes.GENERAL ? 'add' : 'addCallback' */);
                                                 othersDone.push(i);
                                                 break;
@@ -202,7 +215,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                 if (othersDone.length === buffer.length) { break; }
                             } while (chan.count() > 0 || !instrDone);
                             if (buffer.length === othersDone.length) { buffer.cleanup(() => false); }
-                            else { buffer.cleanup((_: Instruction<T, InstrTypes, S>, ind: number) => !othersDone.includes(ind)); }
+                            else { buffer.cleanup((ins: Instruction<T, InstrTypes, S>, ind: number) => !(othersDone.includes(ind) || (ins.INSTRUCTION === InstrTypes.GENERAL && (ins as InstructionGeneral<T, S>).stale))); }
                             if (buffer.length === 0) {
                                 if (instrDone) { currentEventType = undefined; }
                                 else {
@@ -218,6 +231,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                             do {
                                 switch (takeFromChan(chan, instr)) {
                                     case InstructionTakeStates.CHAN_VALUE_OPEN:
+
                                         setImmediate(queueRecursiveAdd,
                                             CSP().get(chan.last() as IChan<T>),
                                             this, instr);
@@ -283,6 +297,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                         else if (instr.INSTRUCTION === InstrTypes.CALLBACK) { (instr as InstructionCallback<T, S>)(); }
                                     }
                                     else {
+
                                         setImmediate(queueRecursiveAdd, CSP().get(instr.channel), this, instr /*, instr.INSTRUCTION === InstrTypes.GENERAL ? 'add' : 'addCallback' */);
                                     }
                                 }
@@ -297,6 +312,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                 if (isChan(val)) {
                                     for (instr of buffer) {
                                         if (doneIndices.includes(i)) { continue; }
+
                                         setImmediate(queueRecursiveAdd, CSP().get(val), this, instr /*, instr.INSTRUCTION === InstrTypes.GENERAL ? 'add' : 'addCallback'*/);
                                         doneIndices.push(i);
                                         i++;
@@ -315,6 +331,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                                 else if (instr.INSTRUCTION === InstrTypes.CALLBACK) { (instr as InstructionCallback<T, S>)(); }
                                             }
                                             else {
+
                                                 setImmediate(queueRecursiveAdd, CSP().get(instr.channel), this, instr /*, instr.INSTRUCTION === InstrTypes.GENERAL ? 'add' : 'addCallback'*/);
                                             }
                                         }
@@ -338,6 +355,7 @@ export function createQ<T extends IStream, S extends IStream = T>(chan: IChan<T,
                                                     else if (instr.INSTRUCTION === InstrTypes.CALLBACK) { (instr as InstructionCallback<T, S>)(); }
                                                 }
                                                 else {
+
                                                     setImmediate(queueRecursiveAdd, CSP().get(instr.channel), this, instr /*, instr.INSTRUCTION === InstrTypes.GENERAL ? 'add' : 'addCallback' */);
                                                 }
                                             }

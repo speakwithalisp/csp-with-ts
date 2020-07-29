@@ -54,6 +54,7 @@ export class Process implements IProc {
         register.apply(CSP(), [this]);
     }
     kill() {
+        if (!this) { return; }
         for (const proc of this._events) {
             if (isProcess(proc)) {
                 if (proc !== this && !proc.channel.closed) {

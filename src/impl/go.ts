@@ -102,6 +102,7 @@ export function go<T extends IStream = IStream, S extends IStream = T>(this: voi
 }
 
 export function timeout(msec: number): IChan<boolean> {
+    // Change to a process
     const ch = chan<boolean>();
     const proc = createProcess(sleep(ch, msec));
     register.apply(CSP(), [proc]);
