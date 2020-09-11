@@ -12,4 +12,4 @@ export function go<T extends IStream = IStream, S extends IStream = IStream>(str
 
 export { IStream, BufferType, chan, isChan, IChan, IChanValue, IProc, ITransducer, IXForm, Reduced, isReduced, timeout, putAsync, takeAsync, dropping, fixed, sliding, IAltsArgs, IGoArgs } from './impl/index';
 
-export { loop, loopFor, loopWhile } from './loops';
+export { loop, loopFor, loopUntil } from './loops';

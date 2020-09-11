@@ -10,7 +10,7 @@ export function loopFor(times: number) {
         let i: number = 0, processes: IProc[] = [];
         for (i; i < times; i++) {
             processes.push(proc);
-            proc = _go_<T, S>(strings, ...cloneArgs);
+            proc = _go_<T, S>(strings, ...cloneArgs).clone();
         }
         const ret: IProc = createProcess(...processes);
         return ret;
@@ -21,18 +21,20 @@ export function loop<T extends IStream = IStream, S extends IStream = IStream>(s
         let thread: Generator<undefined, void, undefined>;
         thread = yield;
         const cloneArgs: IGoArgs<T, S>[] = [...args];
-        let proc: IProc = _go_<T, S>(strings, ...cloneArgs);
+        let proc: IProc = _go_<T, S>(strings, ...[...cloneArgs]);
         try {
             while (true) {
                 if (!procInst.isLive) { break; }
                 proc.run();
                 if (proc.channel.closed) {
-                    proc = _go_<T, S>(strings, ...cloneArgs)
+                    proc = _go_<T, S>(strings, ...[...cloneArgs]).clone();
                 }
                 else {
-                    setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((_?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
-                    yield;
-                    proc = _go_<T, S>(strings, ...cloneArgs);
+                    if (CSP().has(proc.channel)) {
+                        setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                        yield;
+                    }
+                    proc = _go_<T, S>(strings, ...[...cloneArgs]).clone();
                 }
             }
         }
@@ -48,7 +50,7 @@ export function loop<T extends IStream = IStream, S extends IStream = IStream>(s
     return mainProcess;
 }
 
-export function loopWhile(pred?: ((val: any) => boolean)) {
+export function loopUntil(pred?: ((val: any) => boolean)) {
     if (pred === undefined) { return loop; }
     return <T extends IStream = IStream, S extends IStream = IStream>(strings: TemplateStringsArray, ...args: IGoArgs<T, S>[]): IProc => {
         function* loop(procInst: IProc) {
@@ -62,12 +64,14 @@ export function loopWhile(pred?: ((val: any) => boolean)) {
                     if (!procInst.isLive) { break; }
                     proc.run();
                     if (proc.channel.closed) {
-                        proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]);
+                        proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]).clone();
                     }
                     else {
-                        setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((_: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
-                        yield;
-                        proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]);
+                        if (CSP().has(proc.channel)) {
+                            setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                            yield;
+                        }
+                        proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]).clone();
                     }
                 }
             }

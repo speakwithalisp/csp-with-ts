@@ -86,6 +86,7 @@ export interface IProc {
     readonly isLive: boolean;
     run(): void;
     kill(): void;
+    clone(): IProc;
     // [Symbol.asyncIterator](): AsyncGenerator<IProc<ProcessEvents, T>, undefined, IChanValue<T> | undefined>;
 };
 

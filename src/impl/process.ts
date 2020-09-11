@@ -35,6 +35,7 @@ export function register(this: IGoordinator, process: IProc): void {
 
 export class Process implements IProc {
     private _events: Array<IProcEventsProp>;
+    private readonly _eventsLog: Array<IProcEventsProp>;
     private _killHook: (() => void) | null;
     private _channel: IChan<boolean>;
     private _thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>;
@@ -48,6 +49,7 @@ export class Process implements IProc {
         }
         this._thread = obj.thread;
         this._events = obj.events;
+        this._eventsLog = [...obj.events];
         this._channel = chan<boolean>();
         this._live = false;
         if (!CSP().has(this._channel)) { CSP().set(this._channel, createQ<boolean>(this._channel)); }
@@ -70,7 +72,7 @@ export class Process implements IProc {
             }
         }
         if (CSP().has(this._channel) && !this._channel.closed) {
-            putAsync(this._channel, true, true, () => { this._live = false; });
+            putAsync(this._channel, true, true, () => { this._live = false; CSP().get(this._channel).flush(); });
         }
         if (this._killHook) { this._killHook(); }
     }
@@ -79,6 +81,16 @@ export class Process implements IProc {
         thread.next();
         this._live = true;
         thread.next(thread);
+    }
+    clone() {
+        const events: Array<IProcEventsProp> = [];
+        for (const ev of this._eventsLog) {
+            if (isProcess(ev)) { events.push(ev.clone()); }
+            else { events.push(ev); }
+        }
+        const constr: { events: IProcEventsProp[]; kill?: () => void; thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>; } = { thread: this._thread, events };
+        if (this._killHook) { constr.kill = this._killHook; }
+        return new Process(constr);
     }
     get events() { return this._events; }
     get channel() { return this._channel; }
@@ -129,7 +141,7 @@ export function createProcess(...procEventsArgs: IProcEventsProp[]): IProc {
             if (!procInstance.events.length || procInstance.events.every(proc => (proc as IProcE<ProcessEvents, IStream, IStream>).isDone)) { KILL.call(procInstance); }
         }
     }
-    let proto = { events: procEvents, thread: makeThread };
+    let proto = { events: [...procEvents], thread: makeThread };
     const ret: IProc = new Process(proto);
     return ret;
 }
@@ -175,7 +187,7 @@ export function createAlts(returnChan: IChan<IStream>, winVal: { readonly val: I
         }
     }
     // console.log('i am reborn');
-    const proc = Object.create({ events: processEvents, thread: makeThread }, {
+    const proc = Object.create({ events: [...processEvents], thread: makeThread }, {
         kill: {
             value() {
                 returnChan.altFlag = altFlag;
