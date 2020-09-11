@@ -41,7 +41,7 @@ export class RingBuffer<T extends IStream, S extends IStream = T, Q extends ICha
                         yield this.arr[i]!;
                     }
                 }
-                for (i = this.length - 1; i >= this.tail; i -= 1) {
+                for (i = this.arr.length - 1; i >= this.tail; i -= 1) {
                     if (this.arr[i] !== undefined) {
                         yield this.arr[i]!;
                     }
