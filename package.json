@@ -1,6 +1,6 @@
 {
     "name": "csp-with-ts",
-    "version": "0.6.8",
+    "version": "0.6.9",
     "scripts": {
         "clean": "rm -rf lib",
         "build": "npm run clean && rollup -c"
