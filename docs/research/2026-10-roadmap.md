@@ -151,9 +151,19 @@ useEffect(() => go(take(ch, sink((v, done) => {
   channel's transducer). `from(iterable)` and similar helpers are sugar over it.
 - Lifecycle in a framework: the kill function returned by `go`/`loop` is the `useEffect` cleanup.
 
-**Still to design:** how `loop` ends and recurs. Today it re-runs the whole operation list forever. Candidates:
-the loop ends when its kill function runs (unmount); when a channel it takes from closes (Hoare's rule); or by an
-explicit loop-level signal passed to sinks/sources alongside `done` (which today only ends the current take).
+**Loop termination (decided 8 Oct, owner):** a loop ends when its kill function runs (the `useEffect` cleanup), or
+when a channel it takes from closes (Hoare's distributed termination). No loop-level stop signal for now.
+
+**`recur` (open):** in core.async, `go-loop` is `(go (loop [bindings] body))` and `recur` is Clojure's tail jump,
+compiled by the go macro into a jump back to the loop's first state-machine block (`ioc_macros.clj`, the `Recur`
+record and `:recur-point`). Continuing is **opt-in**: a body that doesn't call `recur` ends the loop. core.async's own
+library code shows what that buys:
+- `pipe`: `(when (>! to v) (recur))`, continue only if the put **succeeded** (the destination is still open);
+- `merge`: `(recur (filterv #(not= c %) cs))`, the next iteration runs `alts!` over a **smaller set of channels**,
+  dropping each source as it closes, and closes `out` when none are left.
+Both are decisions based on the *result of a channel operation*, and the second changes the loop's *configuration*
+(which channels it listens to), not just data. Candidate uses here: a put result (`put` reporting whether the
+channel was open) and a dynamic alts set (Go does the same by setting a case's channel to `nil`).
 
 **Rejected alternative (8 Oct, owner):** a state-threading `loop({ init, until }, …)` with pure
 `(value, state) => state` handlers ([`probes/dsl-state-loop-sketch.ts`](probes/dsl-state-loop-sketch.ts)). Reasons:
