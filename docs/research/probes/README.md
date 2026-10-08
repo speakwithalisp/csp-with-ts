@@ -42,5 +42,6 @@ preinstalled Chromium. `dsl-*-sketch.ts(x)` are type-only. Check them with `tsc 
 | `p17_pending.js`, `p17b.js` | Waiting puts delivered LIFO, second put lost; >64 waiting puts mostly lost |
 | `p18_claims.js` | Dropping/sliding semantics, put on closed channel, timeout taken on time, alts tagging workaround |
 | `dsl-sink-source-sketch.ts` | Type-only: the owner's `take`/`put` + `sink`/`source` DSL inside React `useEffect`; mistakes caught |
+| `dsl-dynamic-alts-sketch.ts` | Type-only: `guard` + `alts(() => arms)`; debounce, latest-wins, dynamic fan-in, bounded relay, gesture |
 | `dsl-state-loop-sketch.ts` | Type-only: state-threading `loop` DSL (rejected by owner, kept for reference) |
 | `perf.js`, `perfb.js`, `mem.js` | async/await vs generators vs callbacks: time and retained memory |

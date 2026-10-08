@@ -165,6 +165,30 @@ Both are decisions based on the *result of a channel operation*, and the second 
 (which channels it listens to), not just data. Candidate uses here: a put result (`put` reporting whether the
 channel was open) and a dynamic alts set (Go does the same by setting a case's channel to `nil`).
 
+**Loop logic that changes the channel set (owner's direction, 8 Oct).** The point of `recur` isn't the operator;
+it's that ordinary loop logic decides which channels the next choice listens to. Both traditions have this:
+Hoare's guarded alternatives (`guard; input → command`) and Go's `select`, where "all channels are evaluated" each
+time and a `nil` channel disables a case. core.async's own `mix` does it: its `go-loop` recomputes its `alts!` set
+with `(recur (calc-state))` whenever its `change` channel fires. Two small additions cover it, without
+state-threading vocabulary (type-checked in [`probes/dsl-dynamic-alts-sketch.ts`](probes/dsl-dynamic-alts-sketch.ts)):
+
+```ts
+declare function guard(cond: () => boolean, op: Op): Op;   // arm takes part only while cond() is true
+declare function alts(arms: () => Op[]): Op;              // arms recomputed each time the loop reaches the alts
+```
+
+Patterns this enables, all written with closures and effects:
+1. **Debounce:** the timer arm exists only while a value is pending, and each keystroke replaces it.
+2. **Latest-wins typeahead (switch-latest):** each query gets its own reply channel and only the newest is in the
+   set, so a stale response can't be delivered. This is the showcase's headline bug, solved structurally.
+3. **Dynamic fan-in:** sources join at runtime over a control channel (channels as values), and closed sources
+   drop out of the set.
+4. **Bounded relay** (Ajmani's loop): take input only while below a limit; put output only while non-empty.
+5. **Gesture:** which arms exist depends on the phase (`!dragging` → `down`; `dragging` → `move`, `up`).
+
+Semantics to settle: inside `alts`, a sink handles **one** value per selection (exactly one arm completes), so
+its `done` is redundant there; and a closed arm drops out of the set rather than ending the loop (Phase 3).
+
 **Rejected alternative (8 Oct, owner):** a state-threading `loop({ init, until }, …)` with pure
 `(value, state) => state` handlers ([`probes/dsl-state-loop-sketch.ts`](probes/dsl-state-loop-sketch.ts)). Reasons:
 it adds iteration-specific vocabulary to `loop`, changes the `put`/`take` signatures again, and runs against the
