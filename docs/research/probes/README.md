@@ -41,5 +41,6 @@ preinstalled Chromium. `dsl-*-sketch.ts(x)` are type-only. Check them with `tsc 
 | `p16_bounded.js` | Buffers are bounded; puts wait when full |
 | `p17_pending.js`, `p17b.js` | Waiting puts delivered LIFO, second put lost; >64 waiting puts mostly lost |
 | `p18_claims.js` | Dropping/sliding semantics, put on closed channel, timeout taken on time, alts tagging workaround |
-| `dsl-state-loop-sketch.ts` | Type-only: state-threading `loop`/`go` DSL; 4 planted mistakes caught |
+| `dsl-sink-source-sketch.ts` | Type-only: the owner's `take`/`put` + `sink`/`source` DSL inside React `useEffect`; mistakes caught |
+| `dsl-state-loop-sketch.ts` | Type-only: state-threading `loop` DSL (rejected by owner, kept for reference) |
 | `perf.js`, `perfb.js`, `mem.js` | async/await vs generators vs callbacks: time and retained memory |

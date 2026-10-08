@@ -120,70 +120,50 @@ Pick one (both keep broadcast; both fix the timing dependence measured in `p1b`)
   Hoare-style (a put completes when every member has taken it) or Kahn-style (a buffer per member). Deterministic
   regardless of timing, and plain channels keep one-to-one CSP semantics.
 
-## Phase 7: the operation DSL with state threading *(owner)*
+## Phase 7: the operation DSL *(owner)*
 
-Operations become **descriptions** (`{ kind: 'take', ch, handle }`). `go`/`loop` create the generators when they
-run, so one description can run in many blocks, and `sleep` is armed when it's reached. The template becomes sugar
-that parses into the same operations.
+Operations become **descriptions** (`{ kind: 'take', ch, sink }`). `go`/`loop` create the generators when they run,
+so one description can run in many blocks, and `sleep` is armed when it's reached (which fixes the
+timeout-in-a-loop bug without thunks). The template becomes sugar that parses into the same operations.
 
-A process carries **local state** through its operations, the CSP idiom in all three references: core.async's
-`go-loop`/`recur`, Go's for-select loop ("the cases interact via local state"), and core.async.flow's
-`transform(state, msg) → state'`. Handlers are pure `(value, state) => state`, so a gesture's logic lives in one
-process instead of being split across callbacks that share mutable state.
-
-Type-checked sketch: [`probes/dsl-state-loop-sketch.ts`](probes/dsl-state-loop-sketch.ts). `tsc --strict` catches all
-four planted mistakes: a misspelled state tag, a property missing on the event type, a wrong value type put into a
-channel, and comparing a numeric state to a string.
+**The owner's design** (type-checked in [`probes/dsl-sink-source-sketch.ts`](probes/dsl-sink-source-sketch.ts), with
+a fake React `useEffect`; both planted type mistakes caught):
 
 ```ts
-// the core signatures (placeholders)
-declare function take<T, S>(ch: Chan<any, T>, handle: (value: T, state: S) => NoInfer<S>): Op<S>;
-declare function take<S>(ch: Chan<any, unknown>): Op<S>;                    // wait for one value
-declare function put<T, S>(ch: Chan<T, any>, value: (state: S) => T): Op<S>;
-declare function putEach<T, S>(ch: Chan<T, any>, values: (state: S) => Iterable<T>): Op<S>;  // backpressured
-declare function sleep<S>(ms: number): Op<S>;                               // per-iteration
-declare function timeout(ms: number): Chan<void, never>;                    // shared deadline; closes
-declare function alts<S>(...arms: Op<S>[]): Op<S>;                          // exactly one arm runs its handler
-declare function go<S>(init: S, ...ops: Op<S>[]): Kill;
-declare function loop<S>(spec: { init: S; until?: (s: S) => boolean }, ...ops: Op<S>[]): Kill;
+declare function sink<T>(fn: (value: T, done: () => void) => void): Sink<T>;   // repeating consumer, effects allowed
+declare function source<T>(fn: (done: () => void) => T): Source<T>;            // repeating producer
+declare function take<T>(ch: Chan<any, T>): Op;                                // bare: wait for one value
+declare function take<T>(ch: Chan<any, T>, s: Sink<T>): Op;
+declare function put<T>(ch: Chan<T, any>, s: Source<T>): Op;
+declare function go(...ops: Op[]): Kill;                                       // still returns the kill function
+declare function loop(...ops: Op[]): Kill;
 
-// a drag gesture as one process
-type Drag = { phase: 'idle' } | { phase: 'dragging'; origin: Point; last: Point };
-const idle: Drag = { phase: 'idle' };
-loop<Drag>({ init: idle },
-  alts(
-    take(down, (e, s) => (s.phase === 'idle' ? { phase: 'dragging', origin: pt(e), last: pt(e) } : s)),
-    take(move, (e, s) => (s.phase === 'dragging' ? { ...s, last: pt(e) } : s)),
-    take(up, () => idle),
-    take(keys, (k, s) => (k.key === 'Escape' && s.phase === 'dragging' ? idle : s)),
-  ),
-  put(positions, s => (s.phase === 'dragging' ? s.last : { x: 0, y: 0 })),
-);
-
-loop({ init: 0, until: n => n >= 3 }, take(down, (_e, n) => n + 1));   // ends by state, no sentinel
-
-const deadline = timeout(3000);                                          // whole conversation
-loop({ init: [] as Point[] },
-  alts(take(positions, (p, acc) => [...acc, p]), sleep(200), take(deadline)));  // per-iteration + deadline
+useEffect(() => go(take(ch, sink((v, done) => {
+  if (someCondition(v)) setSomeState(transfx(v)); else done();
+}))), []);
 ```
 
-How a loop ends, with no `STOP` sentinel and no `stop()` threaded through handlers:
-- `until(state)` after an iteration: pure and testable, the analogue of not calling `recur`;
-- a channel it takes from closes: Hoare's distributed termination;
-- `kill()` from outside: component unmount.
+- `take(ch, sink(fn))` is **Go's `for v := range ch { fn(v) }`**: `done()` is `break`, and the consumer also ends when
+  the channel closes. A single consumer body with effects (React state, DOM) is idiomatic CSP. Hickey's "logic in
+  handlers" warning applies only when one process's logic is split across *several* independent callbacks that
+  share mutable state.
+- `source(fn)` is the mirror: called whenever the channel can accept, returning the value to put (transduced by the
+  channel's transducer). `from(iterable)` and similar helpers are sugar over it.
+- Lifecycle in a framework: the kill function returned by `go`/`loop` is the `useEffect` cleanup.
 
-Design notes:
-- `NoInfer<S>` on the handler's return type is needed so the state type comes from the loop, not from whatever a
-  handler happens to return. Without it, `() => idle` narrowed the state to `{ phase: 'idle' }`. Found by
-  compiling the sketch.
-- State should be treated as immutable (handlers return new state). That's what makes one description safe to
-  run in many blocks, and it matches core.async's "value of values".
-- Open: should `alts` arms also allow `seq(...)` for multi-step arms? Should handlers be allowed to return a
-  promise (wait before the next operation)?
+**Still to design:** how `loop` ends and recurs. Today it re-runs the whole operation list forever. Candidates:
+the loop ends when its kill function runs (unmount); when a channel it takes from closes (Hoare's rule); or by an
+explicit loop-level signal passed to sinks/sources alongside `done` (which today only ends the current take).
+
+**Rejected alternative (8 Oct, owner):** a state-threading `loop({ init, until }, …)` with pure
+`(value, state) => state` handlers ([`probes/dsl-state-loop-sketch.ts`](probes/dsl-state-loop-sketch.ts)). Reasons:
+it adds iteration-specific vocabulary to `loop`, changes the `put`/`take` signatures again, and runs against the
+common frontend case, where a loop lives in a `useEffect`, is destroyed on unmount, and updates component state or
+the DOM directly. Kept for reference only.
 
 ## Phase 8: release *(Claude, sweeping; README by the owner)*
 
-TypeScript 5/6 (`NoInfer` needs ≥ 5.4) and tslib 2; modern build (Rollup 4 or tsup, ESM + CJS); remove CRA/React
+TypeScript 5/6 and tslib 2; modern build (Rollup 4 or tsup, ESM + CJS); remove CRA/React
 dev dependencies; CI running the acceptance tests; LICENSE file; real `homepage`; README.
 
 ## Later
@@ -202,5 +182,5 @@ processes; an instrumentation hook for a channel inspector; `chain` (Hoare's `>>
 | 4 | Single dispatcher | Claude | performance |
 | 5 | Rendezvous channels | Owner | full CSP semantics |
 | 6 | Deterministic broadcast (A or B) | Owner | — |
-| 7 | Operation DSL with state threading; template as sugar | Owner | showcase |
+| 7 | Operation DSL (`take`/`put` + `sink`/`source`, descriptions); template as sugar; loop termination TBD | Owner | showcase |
 | 8 | Toolchain, build, CI, README, release | Claude / Owner | publishing |
