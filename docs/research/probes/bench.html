@@ -1,0 +1,30 @@
+<!doctype html><html><body><script>
+window.results = {};
+function chain(name, schedule, n) {
+  return new Promise(res => { let i = 0; const t0 = performance.now();
+    const step = () => { if (++i === n) { const dt = performance.now() - t0; results[name] = { n, totalMs: +dt.toFixed(1), usPerHop: +(dt / n * 1000).toFixed(1) }; res(); } else schedule(step); };
+    schedule(step); });
+}
+const mc = new MessageChannel(); const q = []; mc.port1.onmessage = () => q.shift()();
+const mcSched = f => { q.push(f); mc.port2.postMessage(0); };
+const wq = []; window.addEventListener('message', e => { if (e.data === '__h') wq.shift()(); });
+const pmSched = f => { wq.push(f); window.postMessage('__h', '*'); };
+window.runPrims = async () => {
+  await chain('setTimeout(0)', f => setTimeout(f, 0), 200);
+  await chain('MessageChannel', mcSched, 2000);
+  await chain('window.postMessage', pmSched, 2000);
+  await chain('queueMicrotask', queueMicrotask, 2000);
+  await chain('Promise.then', f => Promise.resolve().then(f), 2000);
+  if (window.scheduler && scheduler.postTask) await chain('scheduler.postTask(user-blocking)', f => scheduler.postTask(f, { priority: 'user-blocking' }), 2000);
+  if (window.scheduler && scheduler.postTask) await chain('scheduler.postTask(user-visible)', f => scheduler.postTask(f), 2000);
+  await chain('requestAnimationFrame', f => requestAnimationFrame(f), 30);
+};
+window.runLib = async (L, label, N) => {
+  const ping = L.chan(), pong = L.chan();
+  (async () => { for (;;) { const v = await L.takeAsync(ping); if (v === null) break; L.putAsync(pong, v + 1); } })();
+  const t0 = performance.now(); let v = 0;
+  for (let i = 0; i < N; i++) { L.putAsync(ping, v); v = await L.takeAsync(pong); }
+  const dt = performance.now() - t0;
+  results[label] = { roundTrips: N, totalMs: +dt.toFixed(1), msPerTrip: +(dt / N).toFixed(3) };
+};
+</script></body></html>

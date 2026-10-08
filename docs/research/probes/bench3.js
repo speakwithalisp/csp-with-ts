@@ -1,0 +1,21 @@
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const fs = require('fs');
+const t = `window.runLoop = (L, label, N) => new Promise(res => {
+  const a = L.chan(); const lat = []; let hops = 0;
+  const p = L.loop\`<! \${a} \${function* () { const t = yield; lat.push(performance.now() - t); if (lat.length === N) { lat.sort((x,y)=>x-y); window.results[label] = { events: N, medianMs: +lat[N>>1].toFixed(2), p95Ms: +lat[Math.floor(N*0.95)].toFixed(2) }; res(); } }}\`;
+  p.run();
+  let i = 0; const fire = () => { L.putAsync(a, performance.now()); if (++i < N) setTimeout(fire, 30); }; setTimeout(fire, 50);
+});`;
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage();
+  p.on('pageerror', e => console.log('PAGEERROR', e.message));
+  await p.goto('file://' + __dirname + '/bench.html');
+  await p.addScriptTag({ content: t });
+  // loops.js keeps setImmediate in the WIP? user said "everywhere" -> polyfill remaining setImmediate with setTimeout too
+  await p.addScriptTag({ content: `window.setImmediate=function(f){var a=[].slice.call(arguments,1);return setTimeout(function(){f.apply(null,a)},0)};` + fs.readFileSync(__dirname + '/lib_st.js', 'utf8') + ';window.L_ST=CSPLIB;' });
+  await p.evaluate(() => runLoop(window.L_ST, 'loop, setTimeout(0)', 40));
+  await p.addScriptTag({ content: `(function(){var mc=new MessageChannel(),q=[];mc.port1.onmessage=function(){var t=q.shift();t[0].apply(null,t[1])};window.setImmediate=function(f){q.push([f,[].slice.call(arguments,1)]);mc.port2.postMessage(0)};})();` + fs.readFileSync(__dirname + '/lib_si.js', 'utf8') + ';window.L_SI=CSPLIB;' });
+  await p.evaluate(() => runLoop(window.L_SI, 'loop, MessageChannel', 40));
+  console.log(JSON.stringify(await p.evaluate(() => results), null, 1));
+  await b.close();
+})();
