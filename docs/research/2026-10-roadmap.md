@@ -41,6 +41,8 @@ A release can call itself a CSP implementation when these pass as automated test
 
 ## Phase 0: foundations *(Claude)*
 
+> Test plan: [`docs/plans/test-strategy.md`](../plans/test-strategy.md). Open decisions: [`docs/plans/open-design-decisions.md`](../plans/open-design-decisions.md).
+
 - Resolve the local uncommitted changes. Keep the `setImmediate`→`setTimeout` swap only if Phase 4 isn't next;
   drop the broken `sleep` hunk either way.
 - Test runner (Vitest on Node 22), a reset hook for the `CSP()` singleton, and the probes from `probes/` turned into
