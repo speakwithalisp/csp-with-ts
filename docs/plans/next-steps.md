@@ -23,15 +23,15 @@ Order matters: tests that pin today's behaviour come **before** the scheduler sw
 
 | # | Task | Done when |
 |---|---|---|
-| T0 | **Test toolchain:** Vitest, fast-check, `@types/node`, a test `tsconfig`, scripts `test`, `test:types`, `test:mem` (`--expose-gc`), `bench`, `specs`. Mechanical type fixes in `src/` if the newer TypeScript needs them (e.g. `catch (e: unknown)`). | `npm test` runs on Node 22; `tsc --noEmit` passes |
+| T0 | **Toolchain:** TypeScript bumped for everything (D8), tslib 2, plus Vitest, fast-check, `@types/node`, a test `tsconfig`, scripts `test`, `test:types`, `test:mem` (`--expose-gc`), `bench`, `specs`. Mechanical type fixes in `src/` if the newer TypeScript needs them (e.g. `catch (e: unknown)`). | `npm test` runs on Node 22; `tsc --noEmit` passes |
 | T1 | **Config + reset hook:** `configure({ scheduler, debug })` applied before first use (the "initial config passed to CSP"); a test-only `__resetCSP()` that replaces the registry. | A test proves queues don't leak between tests |
 | T2 | **Characterisation suite** (`test-strategy.md` §4.5) written against today's behaviour, on the *current* scheduler. | All pass on `master` behaviour |
 | T3 | **Specification suite** §4.1–4.3 as `it.fails` (C1–C15, L1–L7, A1–A7), plus the model-based queue test and the fairness test. | Suite green with the expected failures listed in the ledger |
 | T4 | **Debug hook:** counts of dispatches, parked handlers per channel, live processes, armed timers; an optional event listener. | Count tests (perf §6.2.1) record baselines |
-| T5 | **Dispatcher:** one `dispatch(fn, ...args)` replacing every `setImmediate`/`setTimeout(fn, 0)` call site (~20). Drivers: `messagechannel` (default), `timeout` (fallback), `immediate` (Node), `microtask` (A/B only), `manual` (tests: `step()`, `drainAll()`), `seeded` (tests: reproducible random order). `sleep`/`timeout` keep real `setTimeout`. Node: `unref` the port when idle so it doesn't keep the process alive. | T2 still passes on every driver; T3 expected failures unchanged; count baselines re-recorded |
+| T5 | **Dispatcher:** one `dispatch(fn, ...args)` replacing every `setImmediate`/`setTimeout(fn, 0)` call site (~20). Drivers: `messagechannel` (browser default), `immediate` (Node default, D9), `timeout` (fallback), `microtask` (A/B only), `manual` (tests: `step()`, `drainAll()`), `seeded` (tests: reproducible random order). `sleep`/`timeout` keep real `setTimeout`. Node: `unref` the port when idle so it doesn't keep the process alive. | T2 still passes on every driver; T3 expected failures unchanged; count baselines re-recorded |
 | T6 | **A/B performance harness:** `vitest bench` scenarios (ping-pong, fan-in, 3-stage pipeline, `loop` + alts) run per driver and per build, interleaved; memory suite (bytes per channel/parked consumer, leak slope, `FinalizationRegistry`); Playwright latency page from `probes/bench*.js`. | A report comparing drivers, committed under `docs/perf/` |
 | T7 | **DSL type declarations** (types only, no implementation): `src/dsl/types.ts` with the decided signatures (`go`, `loop`, `take` overloads, `put`, `sink`, `source`, `Kill`); open items (O1 dynamic arms, alts handler shape) left out. Type tests (`*.test-d.ts`) from the sketches, with planted mistakes as `@ts-expect-error`. | `npm run test:types` passes |
-| T8 | **Small fixes with no learning value** (each flips one spec from `it.fails` to `it`): `FixedBuffer.isFull` uses `>=` (C11); `chan()` rejects 0/negative/non-integer sizes (C12); `XChannel.add` closes on `reduced` (C10, first half); `putAsync` rejects `null`/`undefined` (C9); remove dead code (`makeInfiniteThread` log, empty `Channel` class, the "setTimeout to setTimeout" comment); delete CRA leftovers in `test/`; add the GPL-3.0 `LICENSE`; fix `homepage`; drop React/CRA dev dependencies. | Ledger shows those specs passing |
+| T8 | **Small fixes with no learning value** (each flips one spec from `it.fails` to `it`): `FixedBuffer.isFull` uses `>=` (C11); `chan()` rejects 0/negative/non-integer sizes (C12); `XChannel.add` closes on `reduced` (C10, first half); `putAsync` rejects `null`/`undefined` (C9); bug 2, `setImmediate(() => proc.kill())` (L1, D10); remove dead code (`makeInfiniteThread` log, empty `Channel` class, the "setTimeout to setTimeout" comment); delete CRA leftovers in `test/`; add the GPL-3.0 `LICENSE`; fix `homepage`; drop React/CRA dev dependencies. | Ledger shows those specs passing |
 | T9 | **Spec ledger and sign-off tooling** (§4). | `npm run specs` writes the ledger |
 
 **Not in the Claude branch:** anything in §3, the build modernisation (Rollup/tscc, roadmap Phase 8) unless T0 forces
@@ -44,7 +44,7 @@ These carry the design and debugging work, so they stay with the owner:
 | Phase | Work | Specs it flips |
 |---|---|---|
 | 1 | **Channel core rewrite** of `createQ().add`/`flush`: FIFO, no lost puts, no buffer bypass, `MAX_DIRTY` removes inactive only, overflow throws at 1,024; bug 1 (remove the registry `delete`, get-or-create helper); splicing of closed inner channels; transducer completion on close | C1–C5, C7, C10 (second half), C14, C15 |
-| 2 | **Lifecycle:** loops end when an input closes; `timeout` closes at its deadline; cancellable sleep; error policy (O6); bug 2 *if the owner keeps it* (§5 Q4) | L1–L7 |
+| 2 | **Lifecycle:** loops end when an input closes; `timeout` closes at its deadline; cancellable sleep; error policy (O6) | L2–L7 |
 | 3 | **alts:** per-operation commit flag (`alts-design.md` §3 A+B), fairness, priority/default, winner reporting, closed-arm semantics; dynamic arms once O1 is decided | A1–A7 |
 | 5 | Rendezvous channels (after O3) | R1–R3 |
 | 6 | Deterministic broadcast (after O4) | B1–B4 |
@@ -67,7 +67,7 @@ The owner reviews **sentences, not code**:
 
 Asked a few at a time; answers get recorded in `open-design-decisions.md`.
 
-**Blocking the Claude branch**
+**Blocking the Claude branch (answered 11 Oct: one branch `claude/testability-and-dispatcher`; bump TypeScript everywhere now; Node default `setImmediate`, browsers MessageChannel; bug 2 goes to T8. Recorded as D7–D10.)**
 1. Branch name and shape: one branch with ordered commits, or separate branches (harness → dispatcher → fixes)?
 2. Toolchain: bump TypeScript for tests now (may need small type fixes in `src/`, and the old Rollup/tscc build may
    need attention), or keep TS 3.8 for the build and use a newer TS only for type tests?

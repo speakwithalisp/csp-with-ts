@@ -13,6 +13,10 @@ session. Background, evidence and sources are in [`docs/research/2026-10-roadmap
 | D3 | A loop ends when its kill function runs, or when a channel it takes from closes. No loop-level stop signal for now | 8 Oct |
 | D4 | No state-threading `loop({ init, until })`; no `STOP` sentinel; no async/await inside go blocks; no thunks | 8 Oct |
 | D5 | Keep: WeakMap side table, broadcast (made deterministic), generators internally, template as sugar, channel splicing, `putAsync`/`takeAsync` | 8 Oct |
+| D7 | Claude work happens on one branch, `claude/testability-and-dispatcher`, with ordered commits | 11 Oct |
+| D8 | Bump TypeScript for everything now (src, tests, build); the next release is a new major version, published only when all work is done | 11 Oct |
+| D9 | Scheduler drivers: MessageChannel by default in browsers, `setImmediate` by default in Node; `setTimeout` (and others) selectable via the initial config, for fallback and A/B tests | 11 Oct |
+| D10 | Bug 2 (nested kill loses `this`) is fixed by Claude in the small-fixes task | 11 Oct |
 | D6 | `pipe` is not for value transformation (transducers on channels do that); rename any threading helper so it isn't confused with Ramda/RxJS | 8 Oct |
 
 ## Open: to review
