@@ -113,7 +113,7 @@ export function timeout(msec: number): IChan<boolean> {
 function* pseudoSourceSink<S extends IStream>(ev: ProcessEvents.PUT | ProcessEvents.TAKE, winVal: { readonly val: IChanValue<S> | undefined; done?: boolean; setVal(val: IChanValue<S>): void }, val?: IChanValue<S>) {
     switch (ev) {
         case ProcessEvents.PUT: yield val!; if (!!!winVal.done) { winVal.done = true; winVal.setVal(val!); } break;
-        case ProcessEvents.TAKE: const st = yield; if (!!!winVal.done) { winVal.done = true; winVal.setVal(st); } break;
+        case ProcessEvents.TAKE: const st = (yield) as IChanValue<S>; if (!!!winVal.done) { winVal.done = true; winVal.setVal(st); } break;
         default: throw new Error("How did you end up here?");
     }
 }
@@ -135,7 +135,7 @@ export function alts<T extends IStream = IStream, S extends IStream = T>(...args
     for (let arg of Array.from(args)) {
         if (isAltsPut<T, S>(arg)) {
             const [chan, val] = arg as IAltsArgsPut<T, S>;
-            processEvs.push(put<T, S>(chan, () => pseudoSourceSink(ProcessEvents.PUT, winVal, val) as Generator<IChanValue<T>, void, undefined>, altFlag));
+            processEvs.push(put<T, S>(chan as IChan<T, S>, () => pseudoSourceSink(ProcessEvents.PUT, winVal, val) as Generator<IChanValue<T>, void, undefined>, altFlag));
         }
         else if (isChan(arg)) {
             const chan: IChan<T, S> = arg as IChan<T, S>;

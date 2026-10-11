@@ -78,7 +78,7 @@ export function takeAsync<T extends IStream, S extends IStream = T>(ch: IChan<T,
     if (!CSP().has(ch)) { CSP().set(ch, createQ<T, S>(ch)); }
     const ret: Promise<IChanValue<S>> = new Promise<IChanValue<S>>(resolve => {
         // CSP().get(ch)!.addCallback(instructionCallback(ProcessEvents.TAKE, ch, resolve as ((val: T) => T), makeFakeThread()));
-        CSP().get<T, S>(ch)!.add(instructionCallback(ProcessEvents.TAKE, ch, resolve, makeFakeThread()));
+        CSP().get<T, S>(ch)!.add(instructionCallback(ProcessEvents.TAKE, ch, resolve as (val?: IChanValue<S>) => void, makeFakeThread()));
     });
     return ret;
 }

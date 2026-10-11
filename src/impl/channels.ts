@@ -109,14 +109,14 @@ function handleException<T extends IStream, S extends IStream>(exHandler?: Funct
                 try {
                     return xform['@@transducer/step'](buffer, input);
                 } catch (e) {
-                    return handleEx(buffer, e, exHandler);
+                    return handleEx(buffer, e as Error, exHandler);
                 }
             },
             '@@transducer/result': (buffer: BufferType<S>) => {
                 try {
                     return xform['@@transducer/result'](buffer);
                 } catch (e) {
-                    return handleEx(buffer, e, exHandler);
+                    return handleEx(buffer, e as Error, exHandler);
                 }
             },
         });
@@ -146,7 +146,7 @@ class XChannel<T extends IStream, Q extends IStream = T> extends Channel<T, Q> i
         if (!this._closed) {
             this._closed = true;
             if (CSP().has(this)) {
-                setImmediate(queueFlushChannel, this);
+                setImmediate(queueFlushChannel, this as IChan<any>);
             }
         }
     }

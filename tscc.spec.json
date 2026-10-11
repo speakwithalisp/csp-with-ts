@@ -1,6 +1,0 @@
-{
-    "prefix": { "rollup": "lib/", "cc": "lib/" },
-    "modules": {
-        "index": "src/index.ts"
-    }
-}
