@@ -46,7 +46,8 @@ export function spec(id: string, title: string, meta: SpecMeta, fn: () => unknow
         knownBug: meta.knownBug, fixedBy: meta.fixedBy, file: '', hash,
     });
     const name = `[${id}] ${title}`;
-    if (meta.knownBug) {
+    // SPEC_SHOW_BUGS=1 runs known-bug specs as normal tests, to see HOW they fail (the failure should match knownBug).
+    if (meta.knownBug && process.env.SPEC_SHOW_BUGS !== '1') {
         it.fails(name, fn, meta.timeout);
     } else {
         it(name, fn, meta.timeout);
