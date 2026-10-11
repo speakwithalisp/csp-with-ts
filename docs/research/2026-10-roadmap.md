@@ -189,7 +189,7 @@ Patterns this enables, all written with closures and effects:
 5. **Gesture:** which arms exist depends on the phase (`!dragging` → `down`; `dragging` → `move`, `up`).
 
 Semantics to settle if adopted: inside `alts`, a sink handles **one** value per selection (exactly one arm completes), so
-its `done` is redundant there; and a closed arm drops out of the set rather than ending the loop (Phase 3).
+its `done` is redundant there; and how a closed arm behaves (see [`alts-design.md`](../plans/alts-design.md) §2: in Go, core.async and Kotlin a closed channel is *ready with null* and the user's loop drops the arm).
 
 **Rejected alternative (8 Oct, owner):** a state-threading `loop({ init, until }, …)` with pure
 `(value, state) => state` handlers ([`probes/dsl-state-loop-sketch.ts`](probes/dsl-state-loop-sketch.ts)). Reasons:

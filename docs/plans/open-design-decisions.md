@@ -25,7 +25,8 @@ Exploration only. Sketch: [`dsl-dynamic-alts-sketch.ts`](../research/probes/dsl-
 - Patterns it enables: debounce, latest-wins typeahead, dynamic fan-in, bounded relay, gesture phases.
 - Sub-questions:
   - Inside `alts`, does a sink handle exactly one value per selection (so `done` is redundant there)?
-  - Does a closed arm drop out of the set (Go/core.async), with the loop ending only when no arms are left?
+  - Closed arm: ready with null (Go/core.async/Kotlin; the loop drops it) or disabled (tokio)? See
+    [`alts-design.md`](alts-design.md) §2.
   - Is a function-valued `alts` acceptable, given the "no thunks" preference? (It's re-evaluation per pass, not a
     deferred argument, but it's still a function.)
 
@@ -52,6 +53,9 @@ Exploration only. Sketch: [`dsl-dynamic-alts-sketch.ts`](../research/probes/dsl-
 ### O6. Error policy
 - What happens when a sink, source or transducer throws: close the channel, put an `Error`, route to an `exHandler`,
   or rethrow to the caller of `go`? (core.async prints and closes.)
+
+Alternatives to `alts(() => arms)` (guards, builder, mutable set, CML-style `onLose`) are compared in
+[`alts-design.md`](alts-design.md) §4.
 
 ## How to use this doc
 When an item is decided, move it to **Decided** with the date and a one-line reason, then update the roadmap phase
