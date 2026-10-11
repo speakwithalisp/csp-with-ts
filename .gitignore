@@ -25,3 +25,6 @@ yarn-error.log*
 
 # local-only notes (CV framing etc.)
 docs/private/
+
+# test run artefacts
+.spec-meta/
