@@ -1,3 +1,4 @@
+import { dispatch } from './dispatch';
 import { BufferType, fixed } from './buffers';
 import { IChan, IChanValue } from './interfaces';
 import { IStream, CLOSED } from './constants';
@@ -38,7 +39,7 @@ class NoXChannel<T extends IStream> extends Channel<T> implements IChan<T> {
         if (!this._closed) {
             this._closed = true;
             if (CSP().has(this)) {
-                setImmediate(queueFlushChannel, this);
+                dispatch(queueFlushChannel, this);
             }
         }
     }
@@ -146,7 +147,7 @@ class XChannel<T extends IStream, Q extends IStream = T> extends Channel<T, Q> i
         if (!this._closed) {
             this._closed = true;
             if (CSP().has(this)) {
-                setImmediate(queueFlushChannel, this as IChan<any>);
+                dispatch(queueFlushChannel, this as IChan<any>);
             }
         }
     }

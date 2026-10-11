@@ -1,3 +1,4 @@
+import { dispatch } from './dispatch';
 import { IStream, InstrTypes, ProcessEvents, CLOSED } from './constants';
 import { IChan, IChanValue, InstructionGeneral, InstructionCallback, IProcE, IProcSleepE } from './interfaces';
 import { queueNextOnThread } from './scheduler';
@@ -15,7 +16,7 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
             ch.altFlag = event.altFlag;
             if (!CSP().has(ch)) {
                 event && event.return();
-                setImmediate(queueNextOnThread, thread);
+                dispatch(queueNextOnThread, thread);
                 return;
             }
             else if (event.event === ProcessEvents.PUT) {
@@ -23,7 +24,7 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
                 while (true) {
                     if (ch.closed) {
                         event && event.return();
-                        setImmediate(queueNextOnThread, thread);
+                        dispatch(queueNextOnThread, thread);
                         return;
                     }
                     // if (ch.isFull()) { break; }
@@ -45,12 +46,12 @@ export function instruction<T extends IStream, S extends IStream>(event: IProcE<
                     // if (event.altFlag) { ch.altFlag = false; }
                     if (state === undefined || state === CLOSED) { event.return(); break; }
                     ({ done } = event.next(state as IChanValue<S>));
-                    if (event.altFlag || done) { setImmediate(queueNextOnThread, thread); event.return(); break; }
+                    if (event.altFlag || done) { dispatch(queueNextOnThread, thread); event.return(); break; }
                 }
             }
         }
         finally {
-            setImmediate(queueNextOnThread, thread);
+            dispatch(queueNextOnThread, thread);
             event.return();
         }
     }
@@ -87,11 +88,11 @@ export function instructionCallback<T extends IStream, S extends IStream = T>(ev
         case ProcessEvents.TAKE:
             ret = ((myVal: IChanValue<S>) => {
                 (cb as Exclude<typeof ret, IProcSleepE>)(myVal);
-                setImmediate(queueNextOnThread, thread);
+                dispatch(queueNextOnThread, thread);
             }) as Exclude<typeof ret, IProcSleepE>;
             break;
         default: ret = () => {
-            setImmediate(queueNextOnThread, thread);
+            dispatch(queueNextOnThread, thread);
             const ret: IChanValue<T> = (cb as (() => IChanValue<T>) & { close?: boolean; })() as IChanValue<T>; return ret;
         };
             Object.defineProperties(ret, { close: { get() { return !!(cb as (() => IChanValue<T>) & { close?: boolean; }).close; } } });

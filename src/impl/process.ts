@@ -1,3 +1,5 @@
+import { record } from './debug';
+import { dispatch } from './dispatch';
 import { IStream, ProcessEvents } from './constants';
 import { IChan, IChanValue, IProc, IProcE, ProcessEventQ, IGoordinator, IProcEventsProp, IProcSleepE } from './interfaces';
 import { instruction, instructionCallback } from './instructions';
@@ -60,25 +62,26 @@ export class Process implements IProc {
         for (const proc of this._events) {
             if (isProcess(proc)) {
                 if (proc !== this && !proc.channel.closed) {
-                    setImmediate(proc.kill);
+                    dispatch(proc.kill);
                 }
             }
             else {
                 if (!proc.isDone) {
                     if ((proc as Exclude<IProcEventsProp, IProc>).event === ProcessEvents.SLEEP) { (proc as IProcSleepE)(() => { }); }
                     //requestAnimationFrame
-                    else { setImmediate(queueImmediately, proc); }
+                    else { dispatch(queueImmediately, proc); }
                 }
             }
         }
         if (CSP().has(this._channel) && !this._channel.closed) {
-            putAsync(this._channel, true, true, () => { this._live = false; CSP().get(this._channel).flush(); });
+            putAsync(this._channel, true, true, () => { if (this._live) { record('process-ended'); } this._live = false; CSP().get(this._channel).flush(); });
         }
         if (this._killHook) { this._killHook(); }
     }
     run() {
         const thread = this._thread(this, this._events.pop.bind(this._events));
         thread.next();
+        if (!this._live) { record('process-started'); }
         this._live = true;
         thread.next(thread);
     }

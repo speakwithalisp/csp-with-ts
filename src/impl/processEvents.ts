@@ -1,3 +1,4 @@
+import { record } from './debug';
 import { IStream, ProcessEvents, CLOSED } from './constants';
 import { isChan } from './channels';
 import { makeFakeThread } from './utils';
@@ -59,8 +60,8 @@ export function take<T extends IStream, S extends IStream = T>(chan: IChan<T, S>
 
 export function sleep(chan: IChan<boolean>, msecs: number): IProcSleepE {
     let isDone: boolean = false;
-    const cb = (someCb: (() => void)) => { isDone = true; someCb(); };
-    const ret = (someCb: (() => void)) => { setTimeout(cb, msecs, someCb); }
+    const cb = (someCb: (() => void)) => { record('timer-fired'); isDone = true; someCb(); };
+    const ret = (someCb: (() => void)) => { record('timer-armed'); setTimeout(cb, msecs, someCb); }
     Object.defineProperties(ret, { isDone: { get() { return isDone; } }, channel: { get() { return chan; } }, event: { get() { return ProcessEvents.SLEEP; } } });
     return ret as IProcSleepE;
 }

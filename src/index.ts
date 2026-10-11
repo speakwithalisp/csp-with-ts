@@ -15,3 +15,4 @@ export { IStream, BufferType, chan, isChan, IChan, IChanValue, IProc, ITransduce
 export { loop, loopFor, loopUntil } from './loops';
 
 export { configure, CSPConfig, SchedulerName } from './impl/service';
+export { debugStats, resetDebugStats, onDebugEvent, parked, DebugStats, DebugEventKind } from './impl/debug';

@@ -1,3 +1,4 @@
+import { dispatch } from './impl/dispatch';
 import { CSP, go as _go_, IStream, IGoArgs, IProc, createProcess, instructionCallback, ProcessEvents, IChanValue, Process } from './impl/index';
 
 export function loopFor(times: number) {
@@ -31,7 +32,7 @@ export function loop<T extends IStream = IStream, S extends IStream = IStream>(s
                 }
                 else {
                     if (CSP().has(proc.channel)) {
-                        setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                        dispatch(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
                         yield;
                     }
                     proc = _go_<T, S>(strings, ...[...cloneArgs]).clone();
@@ -68,7 +69,7 @@ export function loopUntil(pred?: ((val: any) => boolean)) {
                     }
                     else {
                         if (CSP().has(proc.channel)) {
-                            setImmediate(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                            dispatch(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
                             yield;
                         }
                         proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]).clone();
