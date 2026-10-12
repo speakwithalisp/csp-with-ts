@@ -6,12 +6,12 @@ afterEach(() => __resetCSP());
 
 describe('configure() and the test reset hook (T1)', () => {
     it('defaults to setImmediate in Node', () => {
-        expect(getConfig()).toEqual({ scheduler: 'immediate', debug: false });
+        if (!process.env.CSP_SCHEDULER) { expect(getConfig()).toMatchObject({ scheduler: 'immediate', debug: false }); }
     });
 
     it('accepts an initial configuration before first use', () => {
         configure({ scheduler: 'timeout', debug: true });
-        expect(getConfig()).toEqual({ scheduler: 'timeout', debug: true });
+        expect(getConfig()).toMatchObject({ scheduler: 'timeout', debug: true });
     });
 
     it('rejects configuration after the coordinator is in use', () => {

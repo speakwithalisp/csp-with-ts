@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { chan, go, loop, putAsync, takeAsync, timeout, debugStats, resetDebugStats, onDebugEvent, parked } from '../../src/index';
 import { __resetCSP } from '../../src/impl/service';
+import { __drainAll } from '../../src/impl/dispatch';
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -48,19 +49,25 @@ describe('debug hook (T4)', () => {
     });
 });
 
-// Dispatches per value for each consumer style, measured on the current (setImmediate) scheduler.
-// These are baselines: the dispatcher swap (T5) must not raise them.
+// Dispatches per value for each consumer style. These are baselines: the dispatcher swap (T5) must not raise them.
+// Counted on the manual driver (put, then drain), so they are exact and do not depend on timing or on the driver.
 describe('dispatch budgets per value (baselines, T4/T5)', () => {
     const N = 50;
+    beforeEach(() => { __resetCSP({ debug: true, scheduler: 'manual' }); resetDebugStats(); });
+
+    /** Run queued steps and the promise callbacks they resolve, until both are quiet. */
+    async function pump(): Promise<void> {
+        for (let k = 0; k < 20; k++) { __drainAll(); await Promise.resolve(); }
+    }
+
     async function perValue(setup: (c: ReturnType<typeof chan>) => () => void): Promise<number> {
         const c = chan<number>();
         const stop = setup(c);
-        await wait(5);
+        await pump();
         resetDebugStats();
-        for (let i = 0; i < N; i++) { putAsync(c, i); await wait(2); }
+        for (let i = 0; i < N; i++) { putAsync(c, i); await pump(); }
         const d = debugStats().dispatches / N;
-        stop();
-        await wait(10);
+        stop(); await pump();
         return d;
     }
 
@@ -78,11 +85,17 @@ describe('dispatch budgets per value (baselines, T4/T5)', () => {
         const ping = chan<number>(), pong = chan<number>();
         let running = true;
         (async () => { while (running) { const v = await takeAsync(ping); if (v === null) { break; } putAsync(pong, (v as number) + 1); } })();
-        await wait(5); resetDebugStats();
+        await pump(); resetDebugStats();
         let v = 0;
-        for (let i = 0; i < N; i++) { putAsync(ping, v); v = (await takeAsync(pong)) as number; }
+        for (let i = 0; i < N; i++) {
+            putAsync(ping, v);
+            const reply = takeAsync(pong);
+            await pump();
+            v = (await reply) as number;
+        }
         const d = debugStats().dispatches / N;
-        running = false; ping.close();
+        running = false; ping.close(); await pump();
+        expect(v).toBe(N);
         expect(d).toBeLessThanOrEqual(4);
     });
 });

@@ -4,7 +4,9 @@ import { expect } from 'vitest';
 import * as R from 'ramda';
 import { chan, go, loop, putAsync, takeAsync, isChan } from '../../src/index';
 import { spec } from '../support/spec';
-import { settle, wait, within } from '../support/helpers';
+import { settle, within } from '../support/helpers';
+import { __resetCSP } from '../../src/impl/service';
+import { __drainAll, __step } from '../../src/impl/dispatch';
 
 const P1 = 'Phase 1 (owner)';
 
@@ -31,17 +33,20 @@ spec('C2', 'takers parked on a channel are served in the order they parked', {
     expect(order).toEqual(['first', 'second']);
 });
 
-spec('C3', 'a put never overtakes a value already in the buffer', {
-    mustNot: 'strand a buffered value while newer values go straight to takers', source: 'probe p13',
-    knownBug: 'a value stays in the buffer while later values bypass it', fixedBy: P1,
-}, async () => {
-    const c = chan<number>(); const seen: number[] = [];
-    const p = loop`<! ${c} ${function* () { seen.push((yield) as unknown as number); }}`; p.run();
-    for (let i = 0; i < 100; i++) { putAsync(c, i); await wait(0); }
-    await settle(100);
-    p.kill();
-    expect(seen).toEqual(Array.from({ length: 100 }, (_, i) => i));
-}, );
+spec('C3', 'a loop receives every put in order, even when puts arrive faster than one loop iteration', {
+    mustNot: 'strand a value while newer values bypass it, or drop values', source: 'probe p13; Hoare 1985 BUFFER',
+    knownBug: 'today this fails through bug 1 (the loop dies after 2 values, see C15); re-check once bug 1 is fixed', fixedBy: P1,
+}, () => {
+    // Manual driver: puts land 2 dispatch steps apart, deterministically, whatever driver the suite runs on.
+    __resetCSP({ scheduler: 'manual' });
+    const c = chan<number>(); const seen: unknown[] = [];
+    const p = loop`<! ${c} ${function* () { seen.push(yield); }}`; p.run(); __drainAll();
+    try {
+        for (let i = 0; i < 20; i++) { putAsync(c, i); __step(); __step(); }
+        __drainAll();
+    } finally { p.kill(); }
+    expect(seen).toEqual(Array.from({ length: 20 }, (_, i) => i));
+});
 
 spec('C4', 'up to 1,024 waiting puts are all delivered', {
     mustNot: 'silently drop waiting puts (MAX_DIRTY cleanup)', source: 'core.async MAX-QUEUE-SIZE; probe p17_pending',
@@ -120,16 +125,22 @@ spec('C14', 'an already-closed inner channel put onto a channel still delivers i
     expect(got).toEqual(['i1', 'i2', 'after']);
 });
 
-spec('C15', 'a loop survives events 0-2 ms apart and delivers every value (bug 1)', {
+spec('C15', 'a loop survives puts that arrive before its previous iteration finishes (bug 1)', {
     mustNot: 'crash with "reading \'add\'" or lose values', source: 'e2e assessment bug 1; probes p5, p6',
     knownBug: 'flush() deletes the registry entry before loops.ts looks it up', fixedBy: P1,
-    timeout: 5000,
-}, async () => {
+}, () => {
+    // Manual driver: deterministic on every driver. A full iteration takes ~7 dispatch steps; puts land 2 apart.
+    // (With real time this race shows on 'immediate'/'timeout' but is hidden by 'messagechannel'/'microtask'.)
+    __resetCSP({ scheduler: 'manual' });
     const c = chan<number>(); let n = 0;
-    const p = loop`<! ${c} ${function* () { yield; n++; }}`; p.run();
-    for (let i = 0; i < 100; i++) { putAsync(c, i); await wait(0); }
-    await settle(100); p.kill();
-    expect(n).toBe(100);
+    const p = loop`<! ${c} ${function* () { yield; n++; }}`; p.run(); __drainAll();
+    try {
+        expect(() => {
+            for (let i = 0; i < 20; i++) { putAsync(c, i); __step(); __step(); }
+            __drainAll();
+        }).not.toThrow();
+    } finally { p.kill(); }
+    expect(n).toBe(20);
 });
 
 spec('C16', 'a process can take back a value it put on a buffered channel', {

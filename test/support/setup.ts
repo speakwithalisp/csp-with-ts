@@ -2,10 +2,15 @@
 import { afterAll, afterEach, expect } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { __resetCSP } from '../../src/impl/service';
+import { __resetCSP, __setTestDefaults, DriverName } from '../../src/impl/service';
 
 type Rec = { file: string };
 const g = globalThis as unknown as { __specRegistry?: Rec[] };
+
+// CSP_SCHEDULER=<driver> runs the whole suite on one driver (npm run test:drivers runs it on each).
+const scheduler = process.env.CSP_SCHEDULER as DriverName | undefined;
+if (scheduler) { __setTestDefaults({ scheduler }); }
+__resetCSP();
 
 afterEach(() => { __resetCSP(); });
 
