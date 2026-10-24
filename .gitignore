@@ -28,3 +28,4 @@ docs/private/
 
 # test run artefacts
 .spec-meta/
+coverage/

@@ -5,15 +5,6 @@ import { IStream, CLOSED } from './constants';
 import { CSP } from './service';
 import { IXForm, isReduced, ITransducer } from './utils';
 import { queueFlushChannel } from './scheduler';
-//
-//          IMPORTANT
-//     ,----
-//     | change all instances of setTimeout (except sleep)
-//     | to setImmediate.
-//     | Let Babel handle browser support
-//     | checking
-//     `----
-
 abstract class Channel<T extends IStream, Q extends IStream = T> {
 }
 
@@ -154,8 +145,7 @@ class XChannel<T extends IStream, Q extends IStream = T> extends Channel<T, Q> i
     get closed() { return this._closed; }
 
     add(val: IChanValue<T>) {
-        const closed: boolean = isReduced(this.xform['@@transducer/step'](this.buffer, val));
-        if (isReduced(closed)) { this.close(); }
+        if (isReduced(this.xform['@@transducer/step'](this.buffer, val))) { this.close(); }
     }
     remove() {
         const ret: IChanValue<Q> | undefined = this.buffer.remove() as IChanValue<Q>;
@@ -173,7 +163,14 @@ class XChannel<T extends IStream, Q extends IStream = T> extends Channel<T, Q> i
     }
 }
 
+function checkSize(buf: unknown): void {
+    if (typeof buf === 'number' && (!Number.isInteger(buf) || buf < 1)) {
+        throw new RangeError(`Channel buffer size must be a positive integer. Got ${buf}`);
+    }
+}
+
 export function chan<T extends IStream, Q extends IStream = T>(buf?: number | BufferType<Q extends T ? T : Q>, xform?: ITransducer<IChanValue<T>, IChanValue<Q>, BufferType<Q>>, exHandler?: Function): IChan<T> | IChan<T, Q> {
+    checkSize(buf);
     if (xform === undefined) {
         const buffer = buf === undefined ? fixed<T>(1) : typeof buf === 'number' && buf > 0 ? fixed<T>(buf) : buf as BufferType<T>;
         return new NoXChannel<T>(buffer);

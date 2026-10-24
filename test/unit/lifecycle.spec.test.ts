@@ -8,8 +8,7 @@ import { settle, wait, within } from '../support/helpers';
 const P2 = 'Phase 2 (owner)';
 
 spec('L1', 'killing a process also stops a process it started with eval', {
-    mustNot: 'leave the child running after its parent is killed', source: 'Hoare 1985 §4.5 (P/Q termination); bug 2',
-    knownBug: 'the child keeps taking after the parent is killed', fixedBy: 'T8 (Claude)',
+    mustNot: 'leave the child running after its parent is killed', source: 'Hoare 1985 §4.5 (P/Q termination); bug 2; also a loop must stop its current iteration when killed',
 }, async () => {
     const c = chan<number>(); let n = 0;
     const child = loop`<! ${c} ${function* () { yield; n++; }}`;

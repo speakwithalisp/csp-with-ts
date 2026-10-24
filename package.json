@@ -11,7 +11,8 @@
     "bench": "vitest bench --run",
     "specs": "node scripts/spec-ledger.mjs",
     "signoff": "node scripts/spec-ledger.mjs --signoff",
-    "test:drivers": "for d in immediate messagechannel timeout microtask; do echo \"== $d\"; CSP_SCHEDULER=$d vitest run --project unit || exit 1; done"
+    "test:drivers": "for d in immediate messagechannel timeout microtask; do echo \"== $d\"; CSP_SCHEDULER=$d vitest run --project unit || exit 1; done",
+    "test:coverage": "vitest run --project unit --coverage"
   },
   "main": "lib/index.js",
   "files": [
@@ -20,7 +21,7 @@
   "types": "lib",
   "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
   "license": "GPL-3.0",
-  "homepage": "https://github.com/owner/project#readme",
+  "homepage": "https://github.com/speakwithalisp/csp-with-ts#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/speakwithalisp/csp-with-ts.git"
@@ -29,6 +30,7 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@types/node": "^22.0.0",
     "@types/ramda": "^0.32.0",
+    "@vitest/coverage-v8": "^5.0.5",
     "fast-check": "^4.10.2",
     "ramda": "^0.32.0",
     "rollup": "^4.64.0",

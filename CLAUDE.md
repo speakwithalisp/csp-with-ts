@@ -9,6 +9,7 @@ Ask before changing anything listed as an owner task in `docs/plans/handoff-2026
 - `npm test`: unit suite (Vitest). Expected failures (`it.fails`) count as passing.
 - `npm run test:drivers`: the unit suite on every scheduler (immediate, messagechannel, timeout, microtask).
 - `npm run test:types`: type-checks `src` and `test`, including `test/types/*.test-d.ts`.
+- `npm run test:coverage`: v8 coverage of `src` for the unit project (report in `coverage/`).
 - `npm run test:mem`: memory suite (needs `--expose-gc`, set in the Vitest project).
 - `npm run build`: Rollup, CommonJS to `lib/`.
 - `npm run specs`: runs the tests and regenerates `docs/tests/SPEC-LEDGER.md`.

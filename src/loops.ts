@@ -1,6 +1,10 @@
 import { dispatch } from './impl/dispatch';
 import { CSP, go as _go_, IStream, IGoArgs, IProc, createProcess, instructionCallback, ProcessEvents, IChanValue, Process } from './impl/index';
 
+/** The iteration process each running loop is waiting on, so that killing the loop kills it too. */
+const current = new WeakMap<IProc, IProc>();
+function killCurrent(this: IProc): void { current.get(this)?.kill(); }
+
 export function loopFor(times: number) {
     if (typeof times === 'number' && (!Number.isInteger(times) || times <= 0)) {
         throw new Error(`argument must be positive integer. Got ${times}`);
@@ -26,13 +30,14 @@ export function loop<T extends IStream = IStream, S extends IStream = IStream>(s
         try {
             while (true) {
                 if (!procInst.isLive) { break; }
+                current.set(procInst, proc);
                 proc.run();
                 if (proc.channel.closed) {
                     proc = _go_<T, S>(strings, ...[...cloneArgs]).clone();
                 }
                 else {
                     if (CSP().has(proc.channel)) {
-                        dispatch(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                        dispatch(() => { if (!procInst.isLive) { return; } (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v?: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)); });
                         yield;
                     }
                     proc = _go_<T, S>(strings, ...[...cloneArgs]).clone();
@@ -46,7 +51,8 @@ export function loop<T extends IStream = IStream, S extends IStream = IStream>(s
     }
     const mainProcess: IProc = new Process({
         events: [],
-        thread: loop
+        thread: loop,
+        kill: killCurrent
     });
     return mainProcess;
 }
@@ -63,13 +69,14 @@ export function loopUntil(pred?: ((val: any) => boolean)) {
             try {
                 while (true) {
                     if (!procInst.isLive) { break; }
+                    current.set(procInst, proc);
                     proc.run();
                     if (proc.channel.closed) {
                         proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]).clone();
                     }
                     else {
                         if (CSP().has(proc.channel)) {
-                            dispatch(() => (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)));
+                            dispatch(() => { if (!procInst.isLive) { return; } (CSP().get(proc.channel)!).add(instructionCallback(ProcessEvents.TAKE, proc.channel, ((v: boolean) => { }) as ((val?: IChanValue<boolean>) => IChanValue<boolean> | void), thread)); });
                             yield;
                         }
                         proc = _go_.apply<typeof hook, any[], IProc>(hook, [strings, ...cloneArgs]).clone();
@@ -83,7 +90,8 @@ export function loopUntil(pred?: ((val: any) => boolean)) {
         }
         const mainProcess: IProc = new Process({
             events: [],
-            thread: loop
+            thread: loop,
+            kill: killCurrent
         });
         return mainProcess;
     };

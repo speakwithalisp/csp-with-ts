@@ -147,7 +147,7 @@ export class FixedBuffer<T extends IStream> implements Iterable<IChanValue<T>> {
     *[Symbol.iterator]() { yield* this.buffer; }
 
     isFull(): boolean {
-        return this.buffer.length === this.n;
+        return this.buffer.length >= this.n;
     }
 
     remove(): IChanValue<T> | undefined {

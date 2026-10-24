@@ -78,7 +78,6 @@ spec('C7', 'closing keeps buffered values takeable, then takes return null', {
 
 spec('C9', 'putting null or undefined throws (null means closed)', {
     mustNot: 'insert a close marker into the buffer', source: 'core.async: "Can\'t put nil on a channel"',
-    knownBug: 'accepted silently', fixedBy: 'T8 (Claude)',
 }, () => {
     const c = chan<any>(1);
     expect(() => putAsync(c, null)).toThrow();
@@ -87,7 +86,6 @@ spec('C9', 'putting null or undefined throws (null means closed)', {
 
 spec('C10', 'a transducer that finishes early (take(2)) closes the channel', {
     mustNot: 'keep accepting values after reduced', source: 'core.async: reduced -> abort; channels.ts XChannel.add',
-    knownBug: 'isReduced is called on a boolean, so the channel never closes', fixedBy: 'T8 (Claude)',
 }, async () => {
     const c = chan<number>(5, R.take(2) as any);
     putAsync(c, 1); putAsync(c, 2); putAsync(c, 3); await settle();
@@ -97,7 +95,6 @@ spec('C10', 'a transducer that finishes early (take(2)) closes the channel', {
 
 spec('C11', 'a fixed(1) channel is full once it holds a value, even after an expanding transducer', {
     mustNot: 'report not-full after overflow', source: 'buffers.ts FixedBuffer.isFull',
-    knownBug: 'isFull uses === so it is false at count 2', fixedBy: 'T8 (Claude)',
 }, async () => {
     const c = chan<number>(1, R.chain((x: number) => [x, x]) as any);
     putAsync(c, 1); await settle();
@@ -107,7 +104,6 @@ spec('C11', 'a fixed(1) channel is full once it holds a value, even after an exp
 
 spec('C12', 'chan(0), negative and non-integer sizes are rejected', {
     mustNot: 'build a broken channel', source: 'channels.ts chan(); rendezvous arrives in Phase 5',
-    knownBug: 'chan(0) returns a channel whose buffer is the number 0', fixedBy: 'T8 (Claude)',
 }, () => {
     expect(() => chan(0)).toThrow(RangeError);
     expect(() => chan(-1)).toThrow(RangeError);

@@ -38,11 +38,11 @@ export function register(this: IGoordinator, process: IProc): void {
 export class Process implements IProc {
     private _events: Array<IProcEventsProp>;
     private readonly _eventsLog: Array<IProcEventsProp>;
-    private _killHook: (() => void) | null;
+    private _killHook: ((this: IProc) => void) | null;
     private _channel: IChan<boolean>;
     private _thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>;
     private _live: boolean;
-    constructor(obj: { events: IProcEventsProp[]; kill?: () => void; thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>; }) {
+    constructor(obj: { events: IProcEventsProp[]; kill?: (this: IProc) => void; thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>; }) {
         if (obj.kill) {
             this._killHook = obj.kill;
         }
@@ -58,11 +58,10 @@ export class Process implements IProc {
         register.apply(CSP(), [this]);
     }
     kill() {
-        if (!this) { return; }
         for (const proc of this._events) {
             if (isProcess(proc)) {
                 if (proc !== this && !proc.channel.closed) {
-                    dispatch(proc.kill);
+                    dispatch(() => proc.kill());
                 }
             }
             else {
@@ -76,7 +75,7 @@ export class Process implements IProc {
         if (CSP().has(this._channel) && !this._channel.closed) {
             putAsync(this._channel, true, true, () => { if (this._live) { record('process-ended'); } this._live = false; CSP().get(this._channel).flush(); });
         }
-        if (this._killHook) { this._killHook(); }
+        if (this._killHook) { this._killHook.call(this); }
     }
     run() {
         const thread = this._thread(this, this._events.pop.bind(this._events));
@@ -91,7 +90,7 @@ export class Process implements IProc {
             if (isProcess(ev)) { events.push(ev.clone()); }
             else { events.push(ev); }
         }
-        const constr: { events: IProcEventsProp[]; kill?: () => void; thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>; } = { thread: this._thread, events };
+        const constr: { events: IProcEventsProp[]; kill?: (this: IProc) => void; thread: (procInst: IProc, pop: () => IProcEventsProp | undefined) => Generator<undefined, void, undefined | Generator<undefined, void, undefined>>; } = { thread: this._thread, events };
         if (this._killHook) { constr.kill = this._killHook; }
         return new Process(constr);
     }

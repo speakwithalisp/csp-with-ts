@@ -1,16 +1,5 @@
 // Make fake thread
 export function* makeFakeThread() { yield; }
-export function* makeInfiniteThread() {
-    try {
-        while (true) {
-            yield;
-        }
-    }
-    finally {
-        console.log("it's over. It's done");
-    }
-}
-
 // Transducer interface
 export interface Reduced<A = any> {
     ['@@transducer/value']: A;

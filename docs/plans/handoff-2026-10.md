@@ -47,7 +47,7 @@ Typecheck and build are clean. The spec ledger has 38 specs, none signed off yet
 
 ## 3. Known-bug specs and who fixes them
 
-The 20 `it.fails` specs. Remove `knownBug` from the spec in the same commit as the fix.
+The 15 remaining `it.fails` specs (C9-C12 and L1 were fixed in T8, see section 7). Remove `knownBug` from the spec in the same commit as the fix.
 
 | Spec | Bug | Owner |
 |---|---|---|
@@ -59,15 +59,24 @@ The 20 `it.fails` specs. Remove `knownBug` from the spec in the same commit as t
 | L3 | loop stalls when its input closes | Owner (Phase 2) |
 | L4, L5 | timeout does not close untaken; timeout in a loop runs once | Owner (Phase 2) |
 | A1, A3, A4 | alts consumes both arms; unfair; stale losing arm | Owner (Phase 3) |
-| C9, C10, C11, C12 | null/undefined put, `reduced` closing, `isFull`, chan size validation | Claude (T8) |
-| L1 | killing a parent does not kill an eval'd child (bug 2) | Claude (T8) |
+
+## 7. Update 2026-10-24: T8 done, coverage added
+
+Fixed: `isFull` (C11), `chan()` size validation (C12), `reduced` closes the channel (C10), `putAsync` rejects
+null/undefined (C9), bug 2 (unbound `kill`) and, found while fixing it, loops did not kill their current iteration
+process when killed (L1). Process kill hooks now run with `this` = the process. Dead code removed (`makeInfiniteThread`),
+GPL-3.0 `LICENSE` added, `homepage` fixed. Suite: 51 passed + 15 expected failures on all four schedulers.
+Note: a killed loop no longer registers its deferred take (`loops.ts`), which was exposing bug 1 on kill; the bug
+itself (C15) is still the owner's Phase 1.
+Coverage: `npm run test:coverage` (v8; report in `coverage/`, gitignored). Gap list for a complete CSP:
+`docs/plans/gaps-to-complete-csp.md`.
 
 ## 4. Next steps for Claude Code (on your machine)
 
 Do these on this branch, one commit each, running `npm test`, `npm run test:drivers`, `npm run test:types` and
 `npm run build` before every commit.
 
-1. **T8: small fixes** (each flips one spec):
+1. **T8: small fixes: DONE (see section 7).** Original list, kept for reference:
    - `FixedBuffer.isFull` uses `>=` (C11).
    - `chan()` throws `RangeError` for 0, negative, non-integer sizes (C12).
    - `XChannel.add` closes the channel when the transducer returns `reduced` (C10). `isReduced` is currently

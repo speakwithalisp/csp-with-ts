@@ -68,6 +68,9 @@ export function sleep(chan: IChan<boolean>, msecs: number): IProcSleepE {
 
 
 export function putAsync<T extends IStream, S extends IStream = T>(ch: IChan<T, S>, val: T, close?: boolean, cb?: () => any | void): void {
+    if (val === null || val === undefined) {
+        throw new TypeError("Can't put null or undefined on a channel (null means closed)");
+    }
     if (!CSP().has(ch)) { CSP().set(ch, createQ<T, S>(ch)); }
     // CSP().get(ch)!.addCallback(instructionCallback(ProcessEvents.PUT, ch, () => { cb && cb(); return val; }, makeFakeThread()));
     const mainCB = () => { cb && cb(); return val; };
