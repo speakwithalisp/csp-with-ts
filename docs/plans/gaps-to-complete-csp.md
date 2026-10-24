@@ -17,7 +17,7 @@ Status key: **bug** = spec exists and fails today; **missing** = no feature; **d
 | A5 | **Rendezvous (unbuffered) channels do not exist.** `chan(0)` is now rejected (C12); `chan()` defaults to `fixed(1)`. A put must block until a taker arrives, and a take until a putter | missing | propose R1-R3 | The defining CSP primitive (Hoare 1978 input/output commands; Go `make(chan T)`). Needs a design note: how it interacts with broadcast (O4). |
 | A6 | Broadcast to every parked taker vs single delivery | decide | K1, K13, O4 | Keep as the owner's design, but a "one taker gets it" mode (needed for work queues / worker pools) must be possible. Candidate: `chan` option or a `mult` vs plain-channel split like core.async. |
 | A7 | Put on a closed channel silently drops the value and calls back | decide | K7 | core.async returns `false`; Go panics. Callers cannot tell. Cheapest: pass a boolean to the put callback / resolve `putAsync` with it. |
-| A8 | Closing semantics for pending puts | decide | propose C17 | core.async: pending puts complete with `false`, buffered values stay takeable (C7 holds). Check ours. |
+| A8 | Closing semantics for pending puts | decide | propose C17 | Corrected 2026-10-25: as far as I recall core.async's `close!`, puts already waiting when the channel closes are still delivered to later takers; only new puts are refused (`>!` returns `false`). Buffered values stay takeable (C7 holds). Ours drops waiting puts after calling their callbacks (`processQueue.ts:282-287`, per the Phase 1 plan). Not yet checked against the core.async source (the cloud container cannot reach GitHub): verify before writing C17. Decision W-S3 in `decision-workbook.md`. |
 
 ## B. Choice (alts / select)
 

@@ -136,5 +136,6 @@ npm test && npm run test:drivers && npm run test:types && npm run build
   closed channel and error policy (O6), dynamic alts arms and the alts handler shape (O1), the typing plan.
 - **Closure Compiler:** stays a possible goal for the final build step (release phase). The owner will A/B test
   build size and viability before choosing; see `docs/plans/gaps-to-complete-csp.md` section G.
+- **Open decisions:** all in one place, with options and recommendations, in `docs/plans/decision-workbook.md`.
 - **Next local session:** follow `docs/plans/local-session-brief.md`.
 

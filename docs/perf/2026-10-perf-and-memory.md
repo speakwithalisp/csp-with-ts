@@ -29,9 +29,14 @@ load unsafe to measure). Median of 7 rounds of the per-round mean, with the min-
 Reading: in lock step the choice of driver moves the result by less than the round-to-round spread, except that
 microtask is about 10% faster on the loop scenarios and 20% slower on `goSink` (the microtask driver runs steps
 before the promise callbacks that drive the test, so it changes the interleaving rather than the cost). The cost is
-in the matching code, not the scheduling hop: the loop scenarios take about 190 microseconds per value against about
-20 for `pingPong`, which agrees with the dispatch budgets (7 dispatches per loop iteration against 4 for a plain
-round trip) and with the per-operation `Object.defineProperties` cost noted in `async-core-investigation.md` Q4.
+in the matching code, not the scheduling hop: a value takes about 190 microseconds through the 3-stage `pipeline`
+(about 63 per `loop` stage) and about 190 through one `loop` + `alts` stage, against about 20 for a `pingPong` round
+trip. Dispatch counts (7 per loop iteration against 4 per round trip) explain less than a factor of 2. The rest is
+allocation per value: `loops.ts` re-parses the template and clones a new process every iteration (two `Process`
+objects, each with a completion channel and queue); `processQueue.ts:379` deletes a channel's queue when it drains, so
+the next operation rebuilds it (a 32-slot ring); and every take/put builds getters with `Object.defineProperties`
+(`async-core-investigation.md` Q4). Phase 1's bug-1 fix should remove the queue churn; the rest goes with the Phase 7
+DSL runtime (operations parsed once). (Wording corrected 2026-10-25 by the cloud session.)
 These timings do not model latency under real I/O or a browser.
 
 ## Memory (`test/memory/memory.test.ts`)

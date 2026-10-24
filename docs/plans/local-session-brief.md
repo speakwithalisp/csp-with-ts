@@ -13,24 +13,30 @@ approval), **execute** (step 5). Finish with the **report** (step 6) whatever ha
 1. `git fetch origin` and check out `claude/testability-and-dispatcher`; pull it. If checkout is blocked by a local
    untracked `CLAUDE.md`, stop and ask the owner (suggest renaming theirs to `CLAUDE.local.md`, which is not committed).
 2. Record, without changing anything: `git status`, `git stash list`, `git log --oneline origin/master..master`
-   (unpushed local master commits; the owner thinks one is a small setImmediate to setTimeout fix behind npm
-   `0.7.0-alpha.2`), and other local branches with unpushed commits. Never push, rebase or reset `master`.
-3. `npm ci`, then the gates: `npm test`, `npm run test:drivers`, `npm run test:types`, `npm run build`.
-   Expected: 51 passed + 15 expected failures on each driver, no unhandled errors, clean typecheck and build.
+   (unpushed local master commits), and other local branches with unpushed commits. Known: the owner's
+   setImmediate to setTimeout change and `sleep()` rewrite (the `0.7.0-alpha.2` version bump) is commit `828730e` on
+   the local-only branch `obsolete/legacy-change-of-timer`; leave it alone. Never push, rebase or reset `master`.
+3. Use Node >= 22.12 with its own npm 10 (check `node -v` and `npm -v` first). If the default Node is older and must
+   stay (the owner's machine keeps Node 14 for another codebase), install Node 22 into a scratch prefix and put it
+   first on `PATH` for this session only; never switch the global Node. `npm ci` deletes `node_modules` before it
+   installs, so run it only under the right npm. Then the gates: `npm test`, `npm run test:drivers`, `npm run test:types`, `npm run build`.
+   Expected (as of 573c8a9): 58 passed + 19 expected failures on each driver, no unhandled errors, clean typecheck and build.
    If a gate fails, stop, put the output in the report, and do not "fix" it without the owner.
 
 ## 2. Reading order
 
 1. `CLAUDE.md` (commands and rules).
 2. `docs/plans/handoff-2026-10.md` (what is done, findings, who does what, the owner's latest answers in section 8).
-3. `docs/plans/gaps-to-complete-csp.md` (what a complete CSP still needs, with spec IDs).
-4. `docs/tests/SPEC-LEDGER.md` (every spec, its status, sign-off).
-5. Background on branch `research/csp-inspection`. Read it without checking it out onto this branch, e.g.
+3. `docs/plans/decision-workbook.md` (every open decision; the owner's answers, if any, are on the **Answer:** lines).
+   Turn answered items into specs and decision records before other work.
+4. `docs/plans/gaps-to-complete-csp.md` (what a complete CSP still needs, with spec IDs).
+5. `docs/tests/SPEC-LEDGER.md` (every spec, its status, sign-off).
+6. Background on branch `research/csp-inspection`. Read it without checking it out onto this branch, e.g.
    `git show origin/research/csp-inspection:docs/plans/open-design-decisions.md`. Most useful:
    `docs/plans/open-design-decisions.md` (D1-D10 decided, O1-O6 open), `docs/plans/alts-design.md`,
    `docs/research/2026-10-roadmap.md`, `docs/plans/test-strategy.md`, `docs/plans/typing-and-lifecycle.md`
    and `docs/plans/async-core-investigation.md` (these two came from an earlier local session, possibly yours).
-6. Skim `src/` and `test/` only as needed for steps 3-4.
+7. Skim `src/` and `test/` only as needed for steps 3-4.
 
 ## 3. Memory investigation
 
@@ -58,12 +64,17 @@ which other specs could break. Items: C1/C2 FIFO waiting puts and takers, C4 `MA
 error at 1,024, C3/C15 bug 1 (registry entry deleted in `flush` while `loops.ts` still reads it), C14 splicing an
 already-closed inner channel, C16 put-then-take on the same buffered channel in one process, M1. Suggest an order.
 
-Also list the Claude-side work you propose for step 5, in order, with a done-when for each. Default proposal:
+Also list the Claude-side work you propose for step 5, in order, with a done-when for each. The default proposal
+below was **done** in the first local session (commits `0cd7701`, `672476c`, `573c8a9`). Next proposals come from the
+owner's answers in `docs/plans/decision-workbook.md` (each answered item lists the specs it unblocks). One check the cloud session could not do
+(no GitHub access): read core.async's `clojure/core/async/impl/channels.clj` (`close!`, `take!`) and record what
+happens to puts that are waiting when a channel closes, for workbook item W-S3. Original
+proposal, for reference:
 
 1. Specs (as `it.fails` with `knownBug: 'not implemented'`) for missing features from the gap list: rendezvous
    R1-R3, non-blocking alts A5, put arms A6, closed-arm semantics A7 (only where the expected behaviour is already
-   decided; otherwise write the question, not the spec), close-with-pending-puts C17, `loopUntil` characterisation.
-2. T6: A/B performance harness (`vitest bench` per driver, interleaved) and the memory suite in `test/memory/`
+   decided; otherwise write the question, not the spec), close-with-pending-puts C17, and `loopUntil` as passing characterisation specs (K-specs, not `it.fails`).
+2. T6: A/B performance harness (tinybench per driver, interleaved; Vitest 5 has no `bench`) and the memory suite in `test/memory/`
    (`--expose-gc`), report under `docs/perf/`, including Node MessageChannel start-up and exit cost.
 3. Seeded-driver exploration (many seeds over C1-C4, A1-A4, print failing seeds); informational, not a gate.
 
@@ -72,7 +83,9 @@ Show the plan to the owner and wait for "go" (they may cut or reorder). Do not s
 ## 5. Execution pass
 
 - Work only on `claude/testability-and-dispatcher`. One commit per item, message ending with the attribution lines
-  your harness gives you. Run all four gates before every commit. Push after each green commit.
+  your harness gives you. Run all four gates before every commit. Push after each green commit. If `git push` fails (for example no SSH key in
+  the session), keep committing locally, and put "not pushed: owner must run `git push origin
+  claude/testability-and-dispatcher`" at the top of the report and of the chat summary.
 - Never change owner-task code (Phase 1-3 behaviour in `src/impl/processQueue.ts`, `channels.ts`, `go.ts`,
   `process.ts`, `loops.ts`) unless the owner asks for that specific change. Tests, harnesses, docs, and
   mechanical changes are yours.
