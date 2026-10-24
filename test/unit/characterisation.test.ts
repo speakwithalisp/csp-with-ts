@@ -2,7 +2,7 @@
 // They protect the owner's design choices while the internals are rewritten.
 import { expect } from 'vitest';
 import * as R from 'ramda';
-import { chan, go, loopFor, putAsync, takeAsync, timeout, dropping, sliding, isChan } from '../../src/index';
+import { chan, go, loop, loopFor, loopUntil, putAsync, takeAsync, timeout, dropping, sliding, isChan } from '../../src/index';
 import { spec } from '../support/spec';
 import { settle, within } from '../support/helpers';
 
@@ -130,4 +130,20 @@ spec('K14', 'request/reply works by putting an object that carries a reply chann
     takeAsync(reqs).then(r => { const req = r as { q: string; reply: any }; putAsync(req.reply, req.q.length); });
     putAsync(reqs, { q: 'hello', reply });
     expect(await within(takeAsync(reply))).toBe(5);
+});
+
+spec('K15', 'loopUntil(pred) with an alts step stops after the first value for which pred is true', {
+    kind, source: 'loops.ts loopUntil; go.ts hook (only the ?: form calls it)', mustNot: 'keep looping after the matching value',
+}, async () => {
+    const c = chan<number>(); const seen: unknown[] = [];
+    const p = loopUntil((v: number) => v === 3)`?: ${[c]} ${(v: unknown) => { seen.push(v); }}`; p.run();
+    for (let i = 1; i <= 6; i++) { putAsync(c, i); await settle(15); }
+    p.kill();
+    expect(seen).toEqual([1, 2, 3]);
+});
+
+spec('K16', 'loopUntil() without a predicate is loop', {
+    kind, source: 'loops.ts loopUntil', mustNot: 'stop on its own',
+}, async () => {
+    expect(loopUntil()).toBe(loop);
 });

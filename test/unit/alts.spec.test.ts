@@ -55,3 +55,16 @@ spec('A4', 'an arm that loses leaves its channel usable by other takers', {
     expect(await within(takeAsync(b))).toBe('B');
     expect(got).toEqual(['A']);
 });
+
+spec('A6', 'a put arm that is ready completes, and the unready take arm is withdrawn', {
+    mustNot: 'leave the take arm parked so that it swallows the next value', source: 'Hoare 1978 output guards; core.async alts! put operations',
+    knownBug: 'the take arm stays parked on b and swallows B (same defect as A4)', fixedBy: P3,
+}, async () => {
+    const a = chan<string>(1), b = chan<string>(); const got: unknown[] = [];
+    go`?: ${[[a, 'X'], b]} ${(v: unknown) => { got.push(v); }}`;
+    await settle(20);
+    expect(a.count()).toBe(1);
+    putAsync(b, 'B');
+    expect(await within(takeAsync(b))).toBe('B');
+    expect(got).not.toContain('B');
+});
