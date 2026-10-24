@@ -11,8 +11,10 @@ Starting a new session on this branch: follow `docs/plans/local-session-brief.md
 - `npm run test:drivers`: the unit suite on every scheduler (immediate, messagechannel, timeout, microtask).
 - `npm run test:types`: type-checks `src` and `test`, including `test/types/*.test-d.ts`.
 - `npm run test:coverage`: v8 coverage of `src` for the unit project (report in `coverage/`).
-- `npm run test:mem`: memory suite (needs `--expose-gc`, set in the Vitest project).
+- `npm run test:mem`: memory suite (needs `--expose-gc`, set in the Vitest project). `npm test` runs only the unit project.
 - `npm run build`: Rollup, CommonJS to `lib/`.
+- `npm run bench:ab`: throughput per driver, alternating rounds (tinybench; Vitest 5 has no `bench`). `npm run bench` runs one driver.
+- `npm run perf:startup`: Node start-up and exit cost per driver (needs a build). Reports: `docs/perf/`.
 - `npm run specs`: runs the tests and regenerates `docs/tests/SPEC-LEDGER.md`.
 - `npm run signoff -- <IDs|all|--list>`: owner sign-off of specs (stores hashes in `docs/tests/signoff.json`).
 - `SPEC_SHOW_BUGS=1 npx vitest run <file>`: run known-bug specs as normal tests to see how they fail.

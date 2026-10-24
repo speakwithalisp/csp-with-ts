@@ -22,6 +22,15 @@ export default defineConfig({
             },
             {
                 test: {
+                    name: 'bench',
+                    setupFiles: ['test/support/bench-setup.ts'],
+                    environment: 'node',
+                    include: ['test/bench/**/*.perf.ts'],
+                    testTimeout: 300000,
+                },
+            },
+            {
+                test: {
                     name: 'memory',
                     include: ['test/memory/**/*.test.ts'],
                     setupFiles: ['test/support/setup.ts'],
