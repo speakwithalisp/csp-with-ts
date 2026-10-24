@@ -134,5 +134,7 @@ npm test && npm run test:drivers && npm run test:types && npm run build
 - **Showcase app:** will be rebuilt in a separate new repository, after the Phase 1 MVP. Name and date not set.
 - **Still open:** one-taker mode and `mult`/`tap`/pub-sub (owner leans yes, O4), rendezvous default (O3), put on a
   closed channel and error policy (O6), dynamic alts arms and the alts handler shape (O1), the typing plan.
+- **Closure Compiler:** stays a possible goal for the final build step (release phase). The owner will A/B test
+  build size and viability before choosing; see `docs/plans/gaps-to-complete-csp.md` section G.
 - **Next local session:** follow `docs/plans/local-session-brief.md`.
 

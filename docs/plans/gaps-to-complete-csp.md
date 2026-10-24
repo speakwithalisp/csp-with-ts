@@ -83,6 +83,30 @@ Weakest files, and what would cover them:
 - Not measured: `test/memory` (T6) and the browser. Coverage counts lines, not interleavings; use the seeded driver
   for interleavings (see handoff doc, next steps 3).
 
+## G. Release build: A/B of build size and viability (final build step)
+
+At T0 the tscc (Closure Compiler) step was removed from the Rollup build. After the TypeScript 6 / Rollup 4 upgrade it
+produced a browser-style bundle that Rollup warned might not expose its exports, and it did not minify. Closure stays
+a candidate for the final build: the owner will A/B test it before choosing.
+
+Baselines (`lib/index.js`):
+
+| Build | Raw | gzip |
+|---|---|---|
+| Published 0.6.9 (Rollup + rpt2 + tscc; readable, not minified) | 68,377 B | 9,440 B |
+| Current branch (Rollup + rpt2, CommonJS, not minified) | 66,579 B | 10,987 B |
+
+Candidates to compare: the current build; the current build plus terser; Closure through tscc; Closure through
+`google-closure-compiler` directly (simple and advanced optimisations); optionally esbuild minify.
+
+For each, measure raw, gzip and brotli size. Check viability:
+- `require()` and ESM import both expose every export;
+- the unit suite passes when run against the built bundle instead of `src`;
+- `.d.ts` output is unchanged;
+- advanced-mode property renaming does not break the transducer protocol keys (`@@transducer/*`) or anything read by
+  string name;
+- the build runs on CI without extra system dependencies (Closure needs Java or its native binary).
+
 ## Suggested order
 
 1. Phase 1 (A1-A4) with C-specs and M1; 2. Phase 3 (B1-B3, B4) so alts is trustworthy; 3. A5 rendezvous
