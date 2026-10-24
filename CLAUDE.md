@@ -3,6 +3,7 @@
 TypeScript CSP library (channels, processes, alts) inspired by core.async and js-csp. The owner writes most
 of the core by hand; Claude does scaffolding, mechanical sweeps, tests, and small fixes with no design content.
 Ask before changing anything listed as an owner task in `docs/plans/handoff-2026-10.md`.
+Starting a new session on this branch: follow `docs/plans/local-session-brief.md`.
 
 ## Commands
 

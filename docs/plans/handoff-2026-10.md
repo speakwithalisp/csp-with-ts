@@ -121,3 +121,18 @@ Order from the roadmap on `research/csp-inspection`; the specs above are the acc
 npm ci            # cloud container: NO_PROXY=localhost no_proxy=localhost npm ci --noproxy=localhost
 npm test && npm run test:drivers && npm run test:types && npm run build
 ```
+
+## 8. Owner's answers (after 2026-10-24)
+
+- **Versioning:** no action on the npm `latest` tag or the `0.7.0-alpha.2` release (the owner believes it is a small
+  unpushed fix on a local master). Every change until the next publish belongs to the new major version.
+- **Licence:** MIT (done). No earlier GPL release matters.
+- **Merge:** do not merge this branch to master yet.
+- **Template DSL:** it does not stay indefinitely (supersedes D5's "template as sugar"). The new major either
+  replaces it with the new function-call pattern as a breaking change, or removes it; a backwards-compatible
+  transition is wanted. Which of the two is not decided.
+- **Showcase app:** will be rebuilt in a separate new repository, after the Phase 1 MVP. Name and date not set.
+- **Still open:** one-taker mode and `mult`/`tap`/pub-sub (owner leans yes, O4), rendezvous default (O3), put on a
+  closed channel and error policy (O6), dynamic alts arms and the alts handler shape (O1), the typing plan.
+- **Next local session:** follow `docs/plans/local-session-brief.md`.
+
