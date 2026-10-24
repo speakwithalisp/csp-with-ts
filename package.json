@@ -20,7 +20,7 @@
   ],
   "types": "lib",
   "author": "Shounak Bhattacharya <shounakbhattacharya89@gmail.com>",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "homepage": "https://github.com/speakwithalisp/csp-with-ts#readme",
   "repository": {
     "type": "git",

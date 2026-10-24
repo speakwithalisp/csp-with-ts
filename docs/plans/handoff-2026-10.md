@@ -65,7 +65,7 @@ The 15 remaining `it.fails` specs (C9-C12 and L1 were fixed in T8, see section 7
 Fixed: `isFull` (C11), `chan()` size validation (C12), `reduced` closes the channel (C10), `putAsync` rejects
 null/undefined (C9), bug 2 (unbound `kill`) and, found while fixing it, loops did not kill their current iteration
 process when killed (L1). Process kill hooks now run with `this` = the process. Dead code removed (`makeInfiniteThread`),
-GPL-3.0 `LICENSE` added, `homepage` fixed. Suite: 51 passed + 15 expected failures on all four schedulers.
+`LICENSE` added (changed from GPL-3.0 to MIT on 2026-10-24, because the library is used in a closed-source product), `homepage` fixed. Suite: 51 passed + 15 expected failures on all four schedulers.
 Note: a killed loop no longer registers its deferred take (`loops.ts`), which was exposing bug 1 on kill; the bug
 itself (C15) is still the owner's Phase 1.
 Coverage: `npm run test:coverage` (v8; report in `coverage/`, gitignored). Gap list for a complete CSP:
@@ -85,7 +85,7 @@ Do these on this branch, one commit each, running `npm test`, `npm run test:driv
    - Bug 2: unbound `kill`; make `proc.kill()` run through `dispatch(() => proc.kill())` and ensure `eval` children
      are killed with their parent (L1). The `!this` early return was a stopgap.
    - Remove dead code (`makeInfiniteThread` log, empty `Channel` class, the "setTimeout to setTimeout" comment),
-     the CRA leftovers in `test/`, and fix `homepage`. Add the GPL-3.0 `LICENSE`.
+     the CRA leftovers in `test/`, and fix `homepage`. Add the `LICENSE` (MIT).
    - Finish by running `npm run specs` and committing the regenerated ledger.
 2. **T6: A/B performance harness.** `vitest bench` scenarios (ping-pong, fan-in, 3-stage pipeline, loop + alts)
    per driver, interleaved; memory suite in `test/memory/` (bytes per channel / parked consumer, leak slope with
