@@ -31,6 +31,16 @@ export default defineConfig({
             },
             {
                 test: {
+                    name: 'explore',
+                    include: ['test/explore/**/*.explore.ts'],
+                    environment: 'node',
+                    testTimeout: 1800000,
+                    // C3 and C15 crash with bug 1 on purpose; the script counts those, it must not fail the run.
+                    dangerouslyIgnoreUnhandledErrors: true,
+                },
+            },
+            {
+                test: {
                     name: 'memory',
                     include: ['test/memory/**/*.test.ts'],
                     setupFiles: ['test/support/setup.ts'],

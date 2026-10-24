@@ -65,11 +65,16 @@ Median of 40 fresh Node processes per case, one run of each case per round. "Fir
 | timeout | 3.44 | 59.1 | 6.6 |
 | microtask | 3.53 | 60.1 | 7.5 |
 
-Reading: `messagechannel` starts about 2 ms later and, more importantly, delays process exit by about 24 ms compared with
-`immediate` (the `MessageChannel` port keeps the event loop alive until it is closed). That confirms handoff finding 5
-in direction, with smaller numbers than the cloud container showed (first message about 8 ms vs 1 ms there). It
-supports D9: keep `setImmediate` as the Node default and `MessageChannel` for browsers; if `messagechannel` is ever
-used in Node, close the port when the queue is idle (`unref()` the port, or close it in `idle()`).
+Reading: `messagechannel` starts about 2 ms later and delays process exit by about 24 ms compared with `immediate`.
+That confirms handoff finding 5 in direction, with smaller numbers than the cloud container showed (first message
+about 8 ms vs 1 ms there). The driver already holds a ref on the port only while a flush is pending
+(`src/impl/dispatch.ts`, the `ref`/`unref` code in `makeMessageChannelDriver`), so the delay is not an open handle
+keeping the loop alive; I did not find the cause (creating and tearing down the channel is the obvious suspect). It
+supports D9: keep `setImmediate` as the Node default and `MessageChannel` for browsers.
+
+## Seeded exploration
+
+See `docs/perf/seeded-exploration.md`: shuffling changes no outcome yet (bugs fail on every seed, controls pass on every seed).
 
 ## Not done
 

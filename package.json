@@ -10,6 +10,7 @@
     "test:mem": "vitest run --project memory",
     "bench": "vitest run --project bench",
     "bench:ab": "node scripts/bench-ab.mjs",
+    "explore": "vitest run --project explore",
     "perf:startup": "node scripts/startup-cost.mjs",
     "specs": "node scripts/spec-ledger.mjs",
     "signoff": "node scripts/spec-ledger.mjs --signoff",
